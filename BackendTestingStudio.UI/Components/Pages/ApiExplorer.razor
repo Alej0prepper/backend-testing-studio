@@ -3,10 +3,12 @@
 @using System.Net
 @using EnvironmentEntity = BackendTestingStudio.Core.Environments.Environment
 @using EnvironmentVariableEntity = BackendTestingStudio.Core.Environments.EnvironmentVariable
+@using BackendTestingStudio.Core.History
 @using IEnvironmentService = BackendTestingStudio.Core.Environments.IEnvironmentService
 @using BackendTestingStudio.Core.Http
 @inject IEnvironmentService EnvironmentService
 @inject IHttpEngine HttpEngine
+@inject IRequestHistoryService HistoryService
 
 <PageTitle>API Explorer</PageTitle>
 
@@ -294,6 +296,8 @@
                 .OrderBy(item => item.Key, StringComparer.OrdinalIgnoreCase)
                 .ToDictionary(item => item.Key, item => string.Join(", ", item.Value), StringComparer.OrdinalIgnoreCase);
             _response.ElapsedMs = stopwatch.Elapsed.TotalMilliseconds;
+
+            await HistoryService.RecordAsync(CreateHistoryEntry(selectedEnvironment, _request.Method.ToString().ToUpperInvariant(), request, result, stopwatch.Elapsed));
         }
         catch (Exception ex)
         {
@@ -377,6 +381,67 @@
                     .ToArray()),
             _ => null
         };
+
+    private static RequestHistoryEntry CreateHistoryEntry(
+        EnvironmentEntity? selectedEnvironment,
+        string method,
+        HttpRequestDefinition request,
+        HttpResponseResult result,
+        TimeSpan elapsed)
+        => new(
+            Guid.Empty,
+            DateTimeOffset.UtcNow,
+            selectedEnvironment?.Id,
+            selectedEnvironment?.Name,
+            new RequestHistoryRequestSnapshot(
+                method,
+                BuildSnapshotUrl(request),
+                request.Headers,
+                request.Body switch
+                {
+                    null => RequestHistoryBodyKind.None,
+                    HttpRequestBody.Json json => RequestHistoryBodyKind.Json,
+                    HttpRequestBody.Multipart multipart => RequestHistoryBodyKind.Multipart,
+                    _ => RequestHistoryBodyKind.None
+                },
+                request.Body is HttpRequestBody.Json jsonBody
+                    ? System.Text.Json.JsonSerializer.Serialize(jsonBody.Value)
+                    : null,
+                request.Body is HttpRequestBody.Multipart multipartBody
+                    ? multipartBody.Parts.Select(part => new RequestHistoryMultipartPart(
+                            part.Name,
+                            Convert.ToBase64String(part.Content),
+                            part.FileName,
+                            part.ContentType))
+                        .ToArray()
+                    : []),
+            new RequestHistoryResponseSnapshot(
+                result.StatusCode,
+                result.Headers,
+                result.Content),
+            elapsed.TotalMilliseconds);
+
+    private static string BuildSnapshotUrl(HttpRequestDefinition request)
+    {
+        var builder = new UriBuilder(request.Url);
+        var queryParts = new List<string>();
+
+        if (!string.IsNullOrWhiteSpace(builder.Query))
+        {
+            queryParts.Add(builder.Query.TrimStart('?'));
+        }
+
+        if (request.QueryParameters is not null)
+        {
+            foreach (var pair in request.QueryParameters)
+            {
+                queryParts.Add($"{Uri.EscapeDataString(pair.Key)}={Uri.EscapeDataString(pair.Value ?? string.Empty)}");
+            }
+        }
+
+        builder.Query = string.Join("&", queryParts);
+        return builder.Uri.ToString();
+    }
 
     private static object? ParseJsonBody(string body)
     {

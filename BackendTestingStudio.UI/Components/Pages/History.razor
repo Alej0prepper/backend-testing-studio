@@ -1,0 +1,237 @@
+@page "/history"
+@using System.Net
+@using BackendTestingStudio.Core.History
+@inject IRequestHistoryService HistoryService
+
+<PageTitle>History</PageTitle>
+
+<section class="history-page">
+    <header class="hero card">
+        <div>
+            <span class="eyebrow">Request log</span>
+            <h2>History</h2>
+            <p>Todos los requests enviados se guardan en SQLite con request, response y tiempo de ejecución.</p>
+        </div>
+        <div class="hero-metrics">
+            <div class="metric">
+                <span class="metric-label">Entries</span>
+                <strong>@_entries.Count</strong>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Selected</span>
+                <strong>@(_selectedEntry is null ? "—" : _selectedEntry.Method)</strong>
+            </div>
+        </div>
+    </header>
+
+    <div class="history-grid">
+        <section class="card panel history-list-panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Saved requests</span>
+                    <h3>Entries</h3>
+                </div>
+                <button type="button" class="ghost-button" @onclick="ReloadAsync">Refresh</button>
+            </div>
+
+            @if (_entries.Count == 0)
+            {
+                <div class="empty-state">No history yet.</div>
+            }
+            else
+            {
+                <div class="history-list">
+                    @foreach (var entry in _entries)
+                    {
+                        <button type="button"
+                                class="@GetHistoryItemClass(entry)"
+                                @onclick="() => SelectEntry(entry)">
+                            <span class="history-item-top">
+                                <strong>@entry.Method</strong>
+                                <span>@entry.Status</span>
+                            </span>
+                            <span class="history-item-mid">@entry.Url</span>
+                            <span class="history-item-bottom">@entry.CreatedAt.LocalDateTime.ToString("yyyy-MM-dd HH:mm:ss")</span>
+                        </button>
+                    }
+                </div>
+            }
+        </section>
+
+        <section class="card panel history-detail-panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Detail</span>
+                    <h3>Request snapshot</h3>
+                </div>
+                <button type="button" class="primary-button" @onclick="RepeatSelectedAsync" disabled="@(_selectedEntry is null || _isRepeating)">
+                    @(_isRepeating ? "Repeating..." : "Repeat request")
+                </button>
+            </div>
+
+            @if (_selectedEntry is null)
+            {
+                <div class="empty-state">Select an entry to inspect it.</div>
+            }
+            else
+            {
+                <div class="detail-stack">
+                    <article class="summary-card">
+                        <span class="metric-label">Fecha</span>
+                        <strong>@_selectedEntry.CreatedAt.LocalDateTime.ToString("yyyy-MM-dd HH:mm:ss")</strong>
+                    </article>
+                    <article class="summary-card">
+                        <span class="metric-label">Method</span>
+                        <strong>@_selectedEntry.Method</strong>
+                    </article>
+                    <article class="summary-card">
+                        <span class="metric-label">Status</span>
+                        <strong>@_selectedEntry.Status</strong>
+                    </article>
+                    <article class="summary-card">
+                        <span class="metric-label">Time</span>
+                        <strong>@($"{_selectedEntry.ElapsedMilliseconds:0.##} ms")</strong>
+                    </article>
+                </div>
+
+                <div class="section-block">
+                    <h4>Environment</h4>
+                    <div class="info-row">
+                        <span>@(_selectedEntry.EnvironmentName ?? "No environment")</span>
+                        <span>@(_selectedEntry.EnvironmentId?.ToString() ?? "—")</span>
+                    </div>
+                </div>
+
+                <div class="section-block">
+                    <h4>URL</h4>
+                    <pre class="response-body">@_selectedEntry.Url</pre>
+                </div>
+
+                <div class="section-block">
+                    <h4>Headers</h4>
+                    @if (_selectedEntry.Request.Headers.Count == 0)
+                    {
+                        <div class="empty-state">No headers.</div>
+                    }
+                    else
+                    {
+                        <div class="header-list">
+                            @foreach (var header in _selectedEntry.Request.Headers)
+                            {
+                                <div class="header-row">
+                                    <strong>@header.Key</strong>
+                                    <span>@(header.Value ?? string.Empty)</span>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+
+                <div class="section-block">
+                    <h4>Body</h4>
+                    @if (_selectedEntry.Request.BodyKind == RequestHistoryBodyKind.None)
+                    {
+                        <div class="empty-state">No body.</div>
+                    }
+                    else if (_selectedEntry.Request.BodyKind == RequestHistoryBodyKind.Json)
+                    {
+                        <pre class="response-body">@(_selectedEntry.Request.JsonBody ?? "No body.")</pre>
+                    }
+                    else
+                    {
+                        <div class="multipart-summary">
+                            @foreach (var part in _selectedEntry.Request.MultipartParts)
+                            {
+                                <div class="multipart-item">
+                                    <strong>@part.Name</strong>
+                                    <span>@part.FileName</span>
+                                    <span>@part.ContentType</span>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+
+                <div class="section-block">
+                    <h4>Response</h4>
+                    <div class="summary-card response-status-card">
+                        <span class="metric-label">Status</span>
+                        <strong>@($"{(int)_selectedEntry.Response.StatusCode} {_selectedEntry.Response.StatusCode}")</strong>
+                    </div>
+                    @if (_selectedEntry.Response.Headers.Count > 0)
+                    {
+                        <div class="header-list">
+                            @foreach (var header in _selectedEntry.Response.Headers)
+                            {
+                                <div class="header-row">
+                                    <strong>@header.Key</strong>
+                                    <span>@string.Join(", ", header.Value)</span>
+                                </div>
+                            }
+                        </div>
+                    }
+                    <pre class="response-body">@(_selectedEntry.Response.Body ?? "No response body.")</pre>
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(_message))
+                {
+                    <div class="status-banner">@_message</div>
+                }
+            }
+        </section>
+    </div>
+</section>
+
+@code {
+    private IReadOnlyList<RequestHistoryEntry> _entries = [];
+    private RequestHistoryEntry? _selectedEntry;
+    private bool _isRepeating;
+    private string? _message;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ReloadAsync();
+    }
+
+    private async Task ReloadAsync()
+    {
+        _entries = await HistoryService.GetAllAsync();
+        _selectedEntry ??= _entries.FirstOrDefault();
+        if (_selectedEntry is not null && !_entries.Any(entry => entry.Id == _selectedEntry.Id))
+        {
+            _selectedEntry = _entries.FirstOrDefault();
+        }
+    }
+
+    private void SelectEntry(RequestHistoryEntry entry)
+    {
+        _selectedEntry = entry;
+        _message = null;
+    }
+
+    private async Task RepeatSelectedAsync()
+    {
+        if (_selectedEntry is null)
+        {
+            return;
+        }
+
+        _isRepeating = true;
+        _message = null;
+
+        try
+        {
+            var repeated = await HistoryService.RepeatAsync(_selectedEntry.Id);
+            _message = $"Request repeated and saved as {repeated.CreatedAt.LocalDateTime:yyyy-MM-dd HH:mm:ss}.";
+            await ReloadAsync();
+            _selectedEntry = repeated;
+        }
+        finally
+        {
+            _isRepeating = false;
+        }
+    }
+
+    private string GetHistoryItemClass(RequestHistoryEntry entry)
+        => _selectedEntry?.Id == entry.Id ? "history-item active" : "history-item";
+}

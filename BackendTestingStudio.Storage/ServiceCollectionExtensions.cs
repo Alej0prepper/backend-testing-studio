@@ -1,4 +1,5 @@
 using BackendTestingStudio.Core.Environments;
+using BackendTestingStudio.Core.History;
 using Microsoft.Extensions.DependencyInjection;
 using SQLitePCL;
 
@@ -18,6 +19,7 @@ public static class ServiceCollectionExtensions
         });
         services.AddSingleton<IEnvironmentRepository, Environments.EnvironmentRepository>();
         services.AddSingleton<IEnvironmentService, Environments.EnvironmentService>();
+        services.AddSingleton<IRequestHistoryRepository, History.RequestHistoryRepository>();
 
         return services;
     }

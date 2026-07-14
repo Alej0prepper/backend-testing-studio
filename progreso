@@ -9,27 +9,22 @@ Fecha de revisión: 2026-07-14
 3. El motor HTTP genérico está implementado y probado.
 4. El sistema de ambientes ya está implementado con persistencia SQLite.
 5. La pantalla `API Explorer` ya está creada y usa `IHttpEngine`.
+6. El historial de requests ya quedó implementado con persistencia SQLite y pantalla `History`.
 
 ## Prompt aplicado más reciente
 
-**Prompt 5 - API Explorer**
+**Prompt 6 - Historial**
 
-Se implementó la pantalla `API Explorer` con:
+Se implementó el historial de requests con:
 
-- selección de `Environment`
-- elección de método HTTP
-- URL editable
-- headers
-- query parameters
-- body
-- envío de request
-- visualización de `Status`
-- visualización de `Headers`
-- visualización de `Body`
-- visualización de `Tiempo`
+- guardado automático de request y response
+- persistencia en SQLite
+- página `History`
+- repetición de requests guardados
+- replay usando `IHttpEngine`
 
-La UI no habla directamente con `HttpClient`; todo pasa por `IHttpEngine`.
+El último prompt aplicado quedó en `Prompt 6 - Historial`.
 
 ## Siguiente paso natural
 
-Continuar con la siguiente iteración del roadmap sin romper los contratos ya definidos.
+Continuar con el siguiente prompt del roadmap sin romper los contratos ya definidos.

@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using BackendTestingStudio.Core.History;
 using BackendTestingStudio.Http;
 using BackendTestingStudio.Storage;
+using BackendTestingStudio.UI.History;
 using BackendTestingStudio.UI.Components;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,6 +14,7 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddBackendTestingStudioHttp();
 builder.Services.AddBackendTestingStudioStorage();
+builder.Services.AddScoped<IRequestHistoryService, RequestHistoryService>();
 
 var app = builder.Build();
 
