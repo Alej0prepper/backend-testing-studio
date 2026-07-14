@@ -1,12 +1,15 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using BackendTestingStudio.Http;
 using BackendTestingStudio.UI.Components;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+builder.Services.AddBackendTestingStudioHttp();
 
 var app = builder.Build();
 

@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BackendTestingStudio.Core",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BackendTestingStudio.Http", "BackendTestingStudio.Http\BackendTestingStudio.Http.csproj", "{082FBE75-7345-46C3-AEC8-B7E8E3E53D59}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BackendTestingStudio.Http.Tests", "BackendTestingStudio.Http.Tests\BackendTestingStudio.Http.Tests.csproj", "{5B71E8C6-07A8-4E2F-9B2A-1B8F6A2A7D11}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BackendTestingStudio.Storage", "BackendTestingStudio.Storage\BackendTestingStudio.Storage.csproj", "{6F25C992-8942-46F5-A720-B4BA19EF77DA}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BackendTestingStudio.Scenarios", "BackendTestingStudio.Scenarios\BackendTestingStudio.Scenarios.csproj", "{DC34C748-A61F-4A3E-8728-4B60AC9E7045}"
@@ -65,6 +67,18 @@ Global
 		{082FBE75-7345-46C3-AEC8-B7E8E3E53D59}.Release|x64.Build.0 = Release|Any CPU
 		{082FBE75-7345-46C3-AEC8-B7E8E3E53D59}.Release|x86.ActiveCfg = Release|Any CPU
 		{082FBE75-7345-46C3-AEC8-B7E8E3E53D59}.Release|x86.Build.0 = Release|Any CPU
+		{5B71E8C6-07A8-4E2F-9B2A-1B8F6A2A7D11}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5B71E8C6-07A8-4E2F-9B2A-1B8F6A2A7D11}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5B71E8C6-07A8-4E2F-9B2A-1B8F6A2A7D11}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{5B71E8C6-07A8-4E2F-9B2A-1B8F6A2A7D11}.Debug|x64.Build.0 = Debug|Any CPU
+		{5B71E8C6-07A8-4E2F-9B2A-1B8F6A2A7D11}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{5B71E8C6-07A8-4E2F-9B2A-1B8F6A2A7D11}.Debug|x86.Build.0 = Debug|Any CPU
+		{5B71E8C6-07A8-4E2F-9B2A-1B8F6A2A7D11}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5B71E8C6-07A8-4E2F-9B2A-1B8F6A2A7D11}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5B71E8C6-07A8-4E2F-9B2A-1B8F6A2A7D11}.Release|x64.ActiveCfg = Release|Any CPU
+		{5B71E8C6-07A8-4E2F-9B2A-1B8F6A2A7D11}.Release|x64.Build.0 = Release|Any CPU
+		{5B71E8C6-07A8-4E2F-9B2A-1B8F6A2A7D11}.Release|x86.ActiveCfg = Release|Any CPU
+		{5B71E8C6-07A8-4E2F-9B2A-1B8F6A2A7D11}.Release|x86.Build.0 = Release|Any CPU
 		{6F25C992-8942-46F5-A720-B4BA19EF77DA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{6F25C992-8942-46F5-A720-B4BA19EF77DA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6F25C992-8942-46F5-A720-B4BA19EF77DA}.Debug|x64.ActiveCfg = Debug|Any CPU
