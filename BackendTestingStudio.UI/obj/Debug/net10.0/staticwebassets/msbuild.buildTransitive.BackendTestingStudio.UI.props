@@ -1,0 +1,3 @@
+﻿<Project>
+  <Import Project="../buildMultiTargeting/BackendTestingStudio.UI.props" />
+</Project>

@@ -1,0 +1,39 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v10.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v10.0": {
+      "BackendTestingStudio.UI/1.0.0": {
+        "dependencies": {
+          "BackendTestingStudio.Core": "1.0.0"
+        },
+        "runtime": {
+          "BackendTestingStudio.UI.dll": {}
+        }
+      },
+      "BackendTestingStudio.Core/1.0.0": {
+        "runtime": {
+          "BackendTestingStudio.Core.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "BackendTestingStudio.UI/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "BackendTestingStudio.Core/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

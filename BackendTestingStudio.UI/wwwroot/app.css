@@ -1,0 +1,97 @@
+:root {
+    color-scheme: dark;
+    --bg: #060914;
+    --bg-alt: #0c1222;
+    --surface: rgba(14, 20, 36, 0.84);
+    --surface-strong: rgba(20, 28, 48, 0.96);
+    --border: rgba(255, 255, 255, 0.09);
+    --text: #f3f7ff;
+    --muted: #96a3bf;
+    --accent: #7ab1ff;
+    --accent-2: #53e0a5;
+    --shadow: 0 24px 64px rgba(0, 0, 0, 0.32);
+}
+
+html, body {
+    min-height: 100%;
+}
+
+body {
+    margin: 0;
+    font-family: "Segoe UI Variable", "Aptos", "Helvetica Neue", sans-serif;
+    color: var(--text);
+    background:
+        radial-gradient(circle at top left, rgba(122, 177, 255, 0.18), transparent 32%),
+        radial-gradient(circle at bottom right, rgba(83, 224, 165, 0.14), transparent 30%),
+        linear-gradient(180deg, var(--bg), var(--bg-alt));
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background-image: linear-gradient(rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px);
+    background-size: 64px 64px;
+    mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.85), transparent 95%);
+}
+
+#app {
+    min-height: 100vh;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+button,
+input,
+textarea,
+select {
+    font: inherit;
+}
+
+h1, h2, h3, h4, h5, h6, p {
+    margin-top: 0;
+}
+
+h1:focus {
+    outline: none;
+}
+
+.valid.modified:not([type=checkbox]) {
+    outline: 1px solid #26b050;
+}
+
+.invalid {
+    outline: 1px solid #e50000;
+}
+
+.validation-message {
+    color: #ff8c8c;
+}
+
+.blazor-error-boundary {
+    background: linear-gradient(135deg, rgba(176, 31, 31, 0.98), rgba(92, 11, 11, 0.98));
+    padding: 1rem 1rem 1rem 3.7rem;
+    color: white;
+}
+
+.blazor-error-boundary::after {
+    content: "An error has occurred."
+}
+
+.darker-border-checkbox.form-check-input {
+    border-color: #929292;
+}
+
+.form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
+    color: var(--bs-secondary-color);
+    text-align: end;
+}
+
+.form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
+    text-align: start;
+}

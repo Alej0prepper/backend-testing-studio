@@ -1,0 +1,88 @@
+﻿@inherits LayoutComponentBase
+
+<div class="shell">
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="brand-mark">BTS</div>
+            <div class="brand-copy">
+                <span class="brand-title">Backend Testing Studio</span>
+                <span class="brand-subtitle">Application shell</span>
+            </div>
+        </div>
+
+        <nav class="nav">
+            @foreach (var item in NavigationItems)
+            {
+                <button type="button"
+                        class="@GetNavClass(item.Key)"
+                        @onclick="() => Select(item.Key)">
+                    <span class="nav-label">@item.Label</span>
+                    <span class="nav-chevron">›</span>
+                </button>
+            }
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="status-card">
+                <span class="status-kicker">Platform status</span>
+                <span class="status-value">Bootstrap phase</span>
+                <span class="status-detail">Shell ready, features pending</span>
+            </div>
+        </div>
+    </aside>
+
+    <div class="workspace">
+        <header class="topbar">
+            <div class="topbar-copy">
+                <span class="topbar-kicker">Workspace</span>
+                <h1>@CurrentSection</h1>
+            </div>
+
+            <div class="topbar-actions">
+                <div class="search-pill">
+                    <span class="search-icon">⌕</span>
+                    <span>Search workspace</span>
+                </div>
+                <div class="environment-pill">Local</div>
+                <div class="profile-pill">AT</div>
+            </div>
+        </header>
+
+        <main class="content">
+            @Body
+        </main>
+    </div>
+</div>
+
+<div id="blazor-error-ui" data-nosnippet>
+    An unhandled error has occurred.
+    <a href="." class="reload">Reload</a>
+    <span class="dismiss">🗙</span>
+</div>
+
+@code {
+    private readonly NavigationItem[] NavigationItems =
+    [
+        new("Dashboard", "Dashboard"),
+        new("ApiExplorer", "API Explorer"),
+        new("Scenarios", "Scenarios"),
+        new("History", "History"),
+        new("Reports", "Reports"),
+        new("Settings", "Settings")
+    ];
+
+    private string CurrentSection { get; set; } = "Dashboard";
+
+    private void Select(string key)
+    {
+        CurrentSection = NavigationItems.First(item => item.Key == key).Label;
+    }
+
+    private string GetNavClass(string key)
+    {
+        var isActive = string.Equals(CurrentSection, NavigationItems.First(item => item.Key == key).Label, StringComparison.Ordinal);
+        return isActive ? "nav-item active" : "nav-item";
+    }
+
+    private sealed record NavigationItem(string Key, string Label);
+}

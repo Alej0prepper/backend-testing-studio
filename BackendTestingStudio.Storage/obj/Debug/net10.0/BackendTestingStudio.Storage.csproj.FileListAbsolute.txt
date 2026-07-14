@@ -1,0 +1,15 @@
+/home/alejo/Github/BackendTestingStudio/BackendTestingStudio.Storage/bin/Debug/net10.0/BackendTestingStudio.Storage.deps.json
+/home/alejo/Github/BackendTestingStudio/BackendTestingStudio.Storage/bin/Debug/net10.0/BackendTestingStudio.Storage.dll
+/home/alejo/Github/BackendTestingStudio/BackendTestingStudio.Storage/bin/Debug/net10.0/BackendTestingStudio.Storage.pdb
+/home/alejo/Github/BackendTestingStudio/BackendTestingStudio.Storage/bin/Debug/net10.0/BackendTestingStudio.Core.dll
+/home/alejo/Github/BackendTestingStudio/BackendTestingStudio.Storage/bin/Debug/net10.0/BackendTestingStudio.Core.pdb
+/home/alejo/Github/BackendTestingStudio/BackendTestingStudio.Storage/obj/Debug/net10.0/BackendTestingStudio.Storage.csproj.AssemblyReference.cache
+/home/alejo/Github/BackendTestingStudio/BackendTestingStudio.Storage/obj/Debug/net10.0/BackendTestingStudio.Storage.GeneratedMSBuildEditorConfig.editorconfig
+/home/alejo/Github/BackendTestingStudio/BackendTestingStudio.Storage/obj/Debug/net10.0/BackendTestingStudio.Storage.AssemblyInfoInputs.cache
+/home/alejo/Github/BackendTestingStudio/BackendTestingStudio.Storage/obj/Debug/net10.0/BackendTestingStudio.Storage.AssemblyInfo.cs
+/home/alejo/Github/BackendTestingStudio/BackendTestingStudio.Storage/obj/Debug/net10.0/BackendTestingStudio.Storage.csproj.CoreCompileInputs.cache
+/home/alejo/Github/BackendTestingStudio/BackendTestingStudio.Storage/obj/Debug/net10.0/BackendT.B2FD8C6C.Up2Date
+/home/alejo/Github/BackendTestingStudio/BackendTestingStudio.Storage/obj/Debug/net10.0/BackendTestingStudio.Storage.dll
+/home/alejo/Github/BackendTestingStudio/BackendTestingStudio.Storage/obj/Debug/net10.0/refint/BackendTestingStudio.Storage.dll
+/home/alejo/Github/BackendTestingStudio/BackendTestingStudio.Storage/obj/Debug/net10.0/BackendTestingStudio.Storage.pdb
+/home/alejo/Github/BackendTestingStudio/BackendTestingStudio.Storage/obj/Debug/net10.0/ref/BackendTestingStudio.Storage.dll
