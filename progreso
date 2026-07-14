@@ -4,31 +4,26 @@ Fecha de revisión: 2026-07-14
 
 ## Estado actual
 
-1. La arquitectura base ya está definida.
-2. La UI ya tiene el shell de aplicación.
-3. El motor HTTP genérico ya está implementado.
-4. Las pruebas básicas del motor HTTP ya existen y pasan.
+1. La arquitectura base sigue definida.
+2. La UI tiene el shell de aplicación y navegación real.
+3. El motor HTTP genérico está implementado y probado.
+4. El sistema de ambientes ya está implementado con persistencia SQLite.
 
 ## Prompt aplicado más reciente
 
-**Prompt 3 - HTTP Engine**
+**Prompt 4 - Environments**
 
-Se implementó `IHttpEngine` con soporte para:
+Se implementó el sistema de ambientes con:
 
-- `GET`
-- `POST`
-- `PUT`
-- `PATCH`
-- `DELETE`
-- Headers
-- Query Parameters
-- JSON
-- Multipart
-- Bearer
-- Basic
-- ApiKey
+- `Environment`
+- `EnvironmentVariable`
+- CRUD completo
+- Persistencia SQLite
+- Página `Environments`
 
-También quedó registrado por DI y cubierto con pruebas básicas.
+## Nota técnica
+
+La solución quedó conectada por DI entre UI, Storage y Core para que el panel de ambientes use el servicio sin acceder directo a la base de datos.
 
 ## Siguiente paso natural
 

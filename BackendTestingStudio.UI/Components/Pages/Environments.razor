@@ -1,0 +1,294 @@
+﻿@page "/environments"
+@using EnvironmentEntity = BackendTestingStudio.Core.Environments.Environment
+@using EnvironmentVariableEntity = BackendTestingStudio.Core.Environments.EnvironmentVariable
+@using IEnvironmentService = BackendTestingStudio.Core.Environments.IEnvironmentService
+@inject IEnvironmentService EnvironmentService
+
+<PageTitle>Environments</PageTitle>
+
+<section class="environments">
+    <header class="hero card">
+        <div>
+            <span class="eyebrow">Configuration</span>
+            <h2>Environments</h2>
+            <p>
+                Define base URLs, variables y headers por ambiente. Todo se guarda en SQLite y se puede editar en el mismo panel.
+            </p>
+        </div>
+
+        <div class="hero-metrics">
+            <div class="metric">
+                <span class="metric-label">Saved</span>
+                <strong>@_environments.Count</strong>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Mode</span>
+                <strong>SQLite</strong>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Editor</span>
+                <strong>@(_editor.Id == Guid.Empty ? "New" : "Editing")</strong>
+            </div>
+        </div>
+    </header>
+
+    <div class="workspace-grid">
+        <section class="card panel editor-panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Editor</span>
+                    <h3>@(_editor.Id == Guid.Empty ? "New environment" : "Edit environment")</h3>
+                </div>
+                <button type="button" class="ghost-button" @onclick="ResetEditor">Reset</button>
+            </div>
+
+            <div class="form-grid">
+                <label class="field">
+                    <span>Name</span>
+                    <input @bind="_editor.Name" />
+                </label>
+
+                <label class="field">
+                    <span>Base URL</span>
+                    <input @bind="_editor.BaseUrl" />
+                </label>
+            </div>
+
+            <div class="section-block">
+                <div class="section-header">
+                    <h4>Variables</h4>
+                    <button type="button" class="ghost-button" @onclick="AddVariable">Add variable</button>
+                </div>
+
+                @foreach (var variable in _editor.Variables)
+                {
+                    <div class="row-item">
+                        <input placeholder="Name" @bind="variable.Name" />
+                        <input placeholder="Value" @bind="variable.Value" />
+                        <button type="button" class="icon-button danger" @onclick="() => RemoveVariable(variable)">×</button>
+                    </div>
+                }
+            </div>
+
+            <div class="section-block">
+                <div class="section-header">
+                    <h4>Headers</h4>
+                    <button type="button" class="ghost-button" @onclick="AddHeader">Add header</button>
+                </div>
+
+                @foreach (var header in _editor.Headers)
+                {
+                    <div class="row-item">
+                        <input placeholder="Name" @bind="header.Name" />
+                        <input placeholder="Value" @bind="header.Value" />
+                        <button type="button" class="icon-button danger" @onclick="() => RemoveHeader(header)">×</button>
+                    </div>
+                }
+            </div>
+
+            <div class="actions">
+                <button type="button" class="primary-button" @onclick="SaveAsync">Save environment</button>
+                @if (_editor.Id != Guid.Empty)
+                {
+                    <button type="button" class="ghost-button danger-text" @onclick="DeleteEditingAsync">Delete selected</button>
+                }
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(_statusMessage))
+            {
+                <div class="status-banner">@_statusMessage</div>
+            }
+        </section>
+
+        <section class="card panel list-panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Saved</span>
+                    <h3>Environment list</h3>
+                </div>
+                <span class="count-pill">@_environments.Count items</span>
+            </div>
+
+            <div class="environment-list">
+                @foreach (var environment in _environments)
+                {
+                    <article class="environment-item">
+                        <div>
+                            <h4>@environment.Name</h4>
+                            <p>@environment.BaseUrl</p>
+                            <div class="meta">
+                                <span>@environment.Variables.Count variables</span>
+                                <span>@environment.Headers.Count headers</span>
+                            </div>
+                        </div>
+                        <div class="item-actions">
+                            <button type="button" class="ghost-button" @onclick="() => EditAsync(environment.Id)">Edit</button>
+                            <button type="button" class="ghost-button danger-text" @onclick="() => DeleteAsync(environment.Id)">Delete</button>
+                        </div>
+                    </article>
+                }
+            </div>
+        </section>
+    </div>
+</section>
+
+@code {
+    private readonly EnvironmentEditorModel _editor = new();
+    private IReadOnlyList<EnvironmentEntity> _environments = [];
+    private string? _statusMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ReloadAsync();
+        ResetEditor();
+    }
+
+    private async Task ReloadAsync()
+    {
+        _environments = await EnvironmentService.GetAllAsync();
+    }
+
+    private void ResetEditor()
+    {
+        _editor.Clear();
+        _statusMessage = null;
+    }
+
+    private void AddVariable() => _editor.Variables.Add(new EditorEntry());
+
+    private void AddHeader() => _editor.Headers.Add(new EditorEntry());
+
+    private void RemoveVariable(EditorEntry variable) => _editor.Variables.Remove(variable);
+
+    private void RemoveHeader(EditorEntry header) => _editor.Headers.Remove(header);
+
+    private async Task SaveAsync()
+    {
+        var environment = _editor.ToEnvironment();
+        var saved = environment.Id == Guid.Empty
+            ? await EnvironmentService.CreateAsync(environment)
+            : await EnvironmentService.UpdateAsync(environment);
+
+        _statusMessage = $"Saved '{saved.Name}'.";
+        await ReloadAsync();
+        _editor.Load(saved);
+    }
+
+    private async Task EditAsync(Guid id)
+    {
+        var environment = await EnvironmentService.GetByIdAsync(id);
+        if (environment is null)
+        {
+            _statusMessage = "Environment not found.";
+            return;
+        }
+
+        _editor.Load(environment);
+        _statusMessage = $"Editing '{environment.Name}'.";
+    }
+
+    private async Task DeleteAsync(Guid id)
+    {
+        await EnvironmentService.DeleteAsync(id);
+        await ReloadAsync();
+
+        if (_editor.Id == id)
+        {
+            ResetEditor();
+        }
+
+        _statusMessage = "Environment deleted.";
+    }
+
+    private async Task DeleteEditingAsync()
+    {
+        if (_editor.Id == Guid.Empty)
+        {
+            return;
+        }
+
+        await DeleteAsync(_editor.Id);
+    }
+
+    private sealed class EnvironmentEditorModel
+    {
+        public Guid Id { get; private set; }
+
+        public string Name { get; set; } = string.Empty;
+
+        public string BaseUrl { get; set; } = string.Empty;
+
+        public List<EditorEntry> Variables { get; } = [];
+
+        public List<EditorEntry> Headers { get; } = [];
+
+        public void Clear()
+        {
+            Id = Guid.Empty;
+            Name = string.Empty;
+            BaseUrl = string.Empty;
+            Variables.Clear();
+            Headers.Clear();
+            Variables.Add(new EditorEntry());
+            Headers.Add(new EditorEntry());
+        }
+
+        public void Load(EnvironmentEntity environment)
+        {
+            Id = environment.Id;
+            Name = environment.Name;
+            BaseUrl = environment.BaseUrl;
+            Variables.Clear();
+            Headers.Clear();
+
+            Variables.AddRange(environment.Variables.Select(item => new EditorEntry(item.Id, item.Name, item.Value)));
+            Headers.AddRange(environment.Headers.Select(item => new EditorEntry(item.Id, item.Name, item.Value)));
+
+            if (Variables.Count == 0)
+            {
+                Variables.Add(new EditorEntry());
+            }
+
+            if (Headers.Count == 0)
+            {
+                Headers.Add(new EditorEntry());
+            }
+        }
+
+        public EnvironmentEntity ToEnvironment()
+            => new(
+                Id,
+                Name,
+                BaseUrl,
+                Variables
+                    .Where(item => !item.IsEmpty)
+                    .Select(item => new EnvironmentVariableEntity(item.Id, item.Name, item.Value))
+                    .ToArray(),
+                Headers
+                    .Where(item => !item.IsEmpty)
+                    .Select(item => new EnvironmentVariableEntity(item.Id, item.Name, item.Value))
+                    .ToArray());
+    }
+
+    private sealed class EditorEntry
+    {
+        public EditorEntry()
+        {
+        }
+
+        public EditorEntry(Guid id, string name, string value)
+        {
+            Id = id;
+            Name = name;
+            Value = value;
+        }
+
+        public Guid Id { get; init; } = Guid.Empty;
+
+        public string Name { get; set; } = string.Empty;
+
+        public string Value { get; set; } = string.Empty;
+
+        public bool IsEmpty => string.IsNullOrWhiteSpace(Name) && string.IsNullOrWhiteSpace(Value);
+    }
+}

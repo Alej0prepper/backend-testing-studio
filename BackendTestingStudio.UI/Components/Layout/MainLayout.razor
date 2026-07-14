@@ -1,4 +1,6 @@
 ﻿@inherits LayoutComponentBase
+@implements IDisposable
+@inject NavigationManager NavManager
 
 <div class="shell">
     <aside class="sidebar">
@@ -13,12 +15,13 @@
         <nav class="nav">
             @foreach (var item in NavigationItems)
             {
-                <button type="button"
-                        class="@GetNavClass(item.Key)"
-                        @onclick="() => Select(item.Key)">
+                <NavLink href="@item.Href"
+                         class="nav-item"
+                         ActiveClass="active"
+                         Match="@item.Match">
                     <span class="nav-label">@item.Label</span>
                     <span class="nav-chevron">›</span>
-                </button>
+                </NavLink>
             }
         </nav>
 
@@ -63,26 +66,51 @@
 @code {
     private readonly NavigationItem[] NavigationItems =
     [
-        new("Dashboard", "Dashboard"),
-        new("ApiExplorer", "API Explorer"),
-        new("Scenarios", "Scenarios"),
-        new("History", "History"),
-        new("Reports", "Reports"),
-        new("Settings", "Settings")
+        new("/", "Dashboard", NavLinkMatch.All),
+        new("/environments", "Environments", NavLinkMatch.Prefix),
+        new("/api-explorer", "API Explorer", NavLinkMatch.Prefix),
+        new("/scenarios", "Scenarios", NavLinkMatch.Prefix),
+        new("/history", "History", NavLinkMatch.Prefix),
+        new("/reports", "Reports", NavLinkMatch.Prefix),
+        new("/settings", "Settings", NavLinkMatch.Prefix)
     ];
 
-    private string CurrentSection { get; set; } = "Dashboard";
+    private string CurrentSection => ResolveSection();
 
-    private void Select(string key)
+    protected override void OnInitialized()
     {
-        CurrentSection = NavigationItems.First(item => item.Key == key).Label;
+        NavManager.LocationChanged += HandleLocationChanged;
     }
 
-    private string GetNavClass(string key)
+    private void HandleLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
     {
-        var isActive = string.Equals(CurrentSection, NavigationItems.First(item => item.Key == key).Label, StringComparison.Ordinal);
-        return isActive ? "nav-item active" : "nav-item";
+        InvokeAsync(StateHasChanged);
     }
 
-    private sealed record NavigationItem(string Key, string Label);
+    private string ResolveSection()
+    {
+        var path = NavManager.ToBaseRelativePath(NavManager.Uri).TrimEnd('/');
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return "Dashboard";
+        }
+
+        return path switch
+        {
+            "environments" => "Environments",
+            "api-explorer" => "API Explorer",
+            "scenarios" => "Scenarios",
+            "history" => "History",
+            "reports" => "Reports",
+            "settings" => "Settings",
+            _ => "Dashboard"
+        };
+    }
+
+    public void Dispose()
+    {
+        NavManager.LocationChanged -= HandleLocationChanged;
+    }
+
+    private sealed record NavigationItem(string Href, string Label, NavLinkMatch Match);
 }

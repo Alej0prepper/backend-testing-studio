@@ -3,6 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="..\BackendTestingStudio.Http\BackendTestingStudio.Http.csproj" />
     <ProjectReference Include="..\BackendTestingStudio.Core\BackendTestingStudio.Core.csproj" />
+    <ProjectReference Include="..\BackendTestingStudio.Storage\BackendTestingStudio.Storage.csproj" />
   </ItemGroup>
 
   <PropertyGroup>
