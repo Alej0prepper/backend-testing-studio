@@ -15,19 +15,21 @@ Fecha de revisión: 2026-07-15
 9. El cargador de plugins ya descubre módulos registrados y los muestra en la UI.
 10. La biblioteca de payloads reutilizables ya quedó implementada con persistencia SQLite y se puede aplicar desde `API Explorer`.
 11. El motor HTTP ya resuelve variables runtime antes de ejecutar cada request.
+12. El motor de assertions ya quedó implementado como una librería desacoplada con soporte para status, headers, JSONPath y tiempo máximo.
 
 ## Prompt aplicado más reciente
 
-**Prompt 11 - Variables**
+**Prompt 12 - Assertions**
 
-Se implementó un sistema de variables runtime con:
+Se implementó un motor de assertions desacoplado con:
 
-- soporte para placeholders tipo `{{Token}}`, `{{BrandId}}`, `{{ProductId}}`, `{{OrderId}}` y `{{UserId}}`
-- resolución automática en URL, headers, query parameters, autenticación y body
-- soporte de `RawJson` para aplicar variables antes de enviar el request
-- preservación de los valores resueltos en el historial para que `Repeat` siga funcionando
+- validación de `StatusCode`
+- soporte de `JSONPath`
+- validación de `Headers`
+- operadores `Equals`, `Contains`, `Null` y `NotNull`
+- validación de `Tiempo máximo`
 
-El motor resuelve las variables usando el contexto del request y del ambiente seleccionado antes de enviar la petición.
+El motor no depende de ninguna API concreta; recibe un contexto de respuesta y devuelve resultados de assertion listos para consumir por cualquier capa superior.
 
 ## Siguiente paso natural
 

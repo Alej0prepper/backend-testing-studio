@@ -1,5 +1,6 @@
 <Solution>
   <Project Path="BackendTestingStudio.Assertions/BackendTestingStudio.Assertions.csproj" />
+  <Project Path="BackendTestingStudio.Assertions.Tests/BackendTestingStudio.Assertions.Tests.csproj" />
   <Project Path="BackendTestingStudio.Core/BackendTestingStudio.Core.csproj" />
   <Project Path="BackendTestingStudio.Http/BackendTestingStudio.Http.csproj" />
   <Project Path="BackendTestingStudio.Plugins/BackendTestingStudio.Plugins.csproj" />
