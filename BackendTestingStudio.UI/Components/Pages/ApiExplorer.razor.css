@@ -21,6 +21,10 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.two-cols {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .body-selector {
     min-width: 180px;
 }
@@ -143,6 +147,7 @@
 @media (max-width: 1100px) {
     .workspace-grid,
     .three-cols,
+    .two-cols,
     .response-summary {
         grid-template-columns: 1fr;
     }

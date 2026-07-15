@@ -5,11 +5,13 @@
 @using EnvironmentVariableEntity = BackendTestingStudio.Core.Environments.EnvironmentVariable
 @using BackendTestingStudio.Core.Environments
 @using BackendTestingStudio.Core.History
+@using BackendTestingStudio.Core.Payloads
 @using IEnvironmentService = BackendTestingStudio.Core.Environments.IEnvironmentService
 @using BackendTestingStudio.Core.Http
 @inject IEnvironmentService EnvironmentService
 @inject IHttpEngine HttpEngine
 @inject IRequestHistoryService HistoryService
+@inject IPayloadService PayloadService
 
 <PageTitle>API Explorer</PageTitle>
 
@@ -147,6 +149,39 @@
                 }
             </div>
 
+            <div class="section-block">
+                <div class="section-header">
+                    <div>
+                        <h4>Payload library</h4>
+                        <span class="helper-text">Aplica un payload guardado al body JSON actual.</span>
+                    </div>
+                    <button type="button"
+                            class="ghost-button"
+                            @onclick="ApplySelectedPayloadAsync"
+                            disabled="@(!_payloads.Any() || string.IsNullOrWhiteSpace(_request.SelectedPayloadId))">
+                        Apply payload
+                    </button>
+                </div>
+
+                <div class="form-grid two-cols">
+                    <label class="field">
+                        <span>Saved payload</span>
+                        <select @bind="_request.SelectedPayloadId">
+                            <option value="@string.Empty">Select a payload</option>
+                            @foreach (var payload in _payloads)
+                            {
+                                <option value="@payload.Id.ToString()">@payload.Name</option>
+                            }
+                        </select>
+                    </label>
+
+                    <label class="field">
+                        <span>Preview</span>
+                        <input value="@GetSelectedPayloadPreview()" readonly />
+                    </label>
+                </div>
+            </div>
+
             <div class="actions">
                 <button type="button" class="primary-button" @onclick="SendAsync" disabled="@_isSending">
                     @(_isSending ? "Sending..." : "Send request")
@@ -218,12 +253,14 @@
     private readonly ExplorerRequestModel _request = new();
     private readonly ExplorerResponseModel _response = new();
     private IReadOnlyList<EnvironmentEntity> _environments = [];
+    private IReadOnlyList<PayloadDefinition> _payloads = [];
     private bool _isSending;
     private string? _errorMessage;
 
     protected override async Task OnInitializedAsync()
     {
         await ReloadEnvironmentsAsync();
+        await ReloadPayloadsAsync();
         ResetRequest();
     }
 
@@ -234,6 +271,11 @@
         {
             _request.SelectedEnvironmentId = _environments[0].Id.ToString();
         }
+    }
+
+    private async Task ReloadPayloadsAsync()
+    {
+        _payloads = await PayloadService.GetAllAsync();
     }
 
     private void AddHeader() => _request.Headers.Add(new NameValueEntry());
@@ -265,7 +307,49 @@
             }
             """;
         _request.BodyMode = ExplorerBodyMode.Json;
+        _request.SelectedPayloadId = string.Empty;
         _errorMessage = null;
+    }
+
+    private async Task ApplySelectedPayloadAsync()
+    {
+        if (!Guid.TryParse(_request.SelectedPayloadId, out var payloadId))
+        {
+            return;
+        }
+
+        var payload = await PayloadService.GetByIdAsync(payloadId);
+        if (payload is null)
+        {
+            _errorMessage = "Selected payload was not found.";
+            return;
+        }
+
+        _request.BodyMode = ExplorerBodyMode.Json;
+        _request.JsonBody = payload.RenderJson();
+        _errorMessage = null;
+    }
+
+    private string GetSelectedPayloadPreview()
+    {
+        if (!Guid.TryParse(_request.SelectedPayloadId, out var payloadId))
+        {
+            return "No payload selected.";
+        }
+
+        var payload = _payloads.FirstOrDefault(item => item.Id == payloadId);
+        if (payload is null)
+        {
+            return "Payload not found.";
+        }
+
+        var preview = payload.RenderJson().ReplaceLineEndings(" ").Trim();
+        if (preview.Length <= 80)
+        {
+            return preview;
+        }
+
+        return preview[..80] + "...";
     }
 
     private async Task SendAsync()
@@ -459,6 +543,8 @@
     private sealed class ExplorerRequestModel
     {
         public string SelectedEnvironmentId { get; set; } = string.Empty;
+
+        public string SelectedPayloadId { get; set; } = string.Empty;
 
         public ExplorerMethod Method { get; set; } = ExplorerMethod.Get;
 
