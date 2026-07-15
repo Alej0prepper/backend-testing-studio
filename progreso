@@ -12,23 +12,20 @@ Fecha de revisión: 2026-07-15
 6. El historial de requests ya quedó implementado con persistencia SQLite y pantalla `History`.
 7. La autenticación por ambiente ya está integrada y el motor HTTP la aplica automáticamente.
 8. El modelo de plugins ya quedó definido en `Core`, sin loader ni runtime.
+9. El cargador de plugins ya descubre módulos registrados y los muestra en la UI.
 
 ## Prompt aplicado más reciente
 
-**Prompt 8 - Sistema de Plugins**
+**Prompt 9 - Plugin Loader**
 
-Se definió el modelo de plugins con:
+Se implementó el cargador de plugins con:
 
-- Nombre
-- Versión
-- Autor
-- Descripción
-- Endpoints
-- Escenarios
-- Payloads
-- Variables
+- descubrimiento automático de módulos implementando una interfaz común
+- plugin interno de ejemplo
+- pantalla `Plugins` en la UI
+- listado de plugins instalados
 
-El modelo quedó en `BackendTestingStudio.Core` como arquitectura base. Todavía no se cargan plugins.
+El loader recorre los assemblies del producto y expone la metadata del plugin sin ejecutar ningún runtime adicional.
 
 ## Siguiente paso natural
 

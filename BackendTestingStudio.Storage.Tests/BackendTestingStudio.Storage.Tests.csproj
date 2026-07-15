@@ -18,6 +18,7 @@
   <ItemGroup>
     <ProjectReference Include="..\BackendTestingStudio.Core\BackendTestingStudio.Core.csproj" />
     <ProjectReference Include="..\BackendTestingStudio.Storage\BackendTestingStudio.Storage.csproj" />
+    <ProjectReference Include="..\BackendTestingStudio.Plugins\BackendTestingStudio.Plugins.csproj" />
   </ItemGroup>
 
 </Project>

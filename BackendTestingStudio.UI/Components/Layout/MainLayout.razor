@@ -7,9 +7,16 @@
         <div class="brand">
             <div class="brand-mark">BTS</div>
             <div class="brand-copy">
-                <span class="brand-title">Backend Testing Studio</span>
-                <span class="brand-subtitle">Application shell</span>
+                <span class="brand-kicker">Backend Testing Studio</span>
+                <span class="brand-title">Request lab</span>
+                <span class="brand-subtitle">Environments, API Explorer, History y escenarios.</span>
             </div>
+        </div>
+
+        <div class="sidebar-intro">
+            <span class="sidebar-intro-label">Workspace</span>
+            <strong>Local development</strong>
+            <p>Explora, repite y audita requests con persistencia SQLite.</p>
         </div>
 
         <nav class="nav">
@@ -28,8 +35,8 @@
         <div class="sidebar-footer">
             <div class="status-card">
                 <span class="status-kicker">Platform status</span>
-                <span class="status-value">Bootstrap phase</span>
-                <span class="status-detail">Shell ready, features pending</span>
+                <span class="status-value">Shell ready</span>
+                <span class="status-detail">Core, storage and HTTP engine connected.</span>
             </div>
         </div>
     </aside>
@@ -39,14 +46,15 @@
             <div class="topbar-copy">
                 <span class="topbar-kicker">Workspace</span>
                 <h1>@CurrentSection</h1>
+                <p class="topbar-description">@CurrentDescription</p>
             </div>
 
             <div class="topbar-actions">
-                <div class="search-pill">
+                <div class="search-pill" role="button" tabindex="0">
                     <span class="search-icon">⌕</span>
                     <span>Search workspace</span>
                 </div>
-                <div class="environment-pill">Local</div>
+                <div class="environment-pill"><span class="dot"></span><span>Local</span></div>
                 <div class="profile-pill">AT</div>
             </div>
         </header>
@@ -72,10 +80,12 @@
         new("/scenarios", "Scenarios", NavLinkMatch.Prefix),
         new("/history", "History", NavLinkMatch.Prefix),
         new("/reports", "Reports", NavLinkMatch.Prefix),
-        new("/settings", "Settings", NavLinkMatch.Prefix)
+        new("/settings", "Settings", NavLinkMatch.Prefix),
+        new("/plugins", "Plugins", NavLinkMatch.Prefix)
     ];
 
     private string CurrentSection => ResolveSection();
+    private string CurrentDescription => ResolveDescription();
 
     protected override void OnInitialized()
     {
@@ -103,7 +113,25 @@
             "history" => "History",
             "reports" => "Reports",
             "settings" => "Settings",
+            "plugins" => "Plugins",
             _ => "Dashboard"
+        };
+    }
+
+    private string ResolveDescription()
+    {
+        var section = ResolveSection();
+        return section switch
+        {
+            "Dashboard" => "Estado general del producto y accesos rápidos a las piezas principales.",
+            "Environments" => "Administra variables, headers y bases URL reutilizables.",
+            "API Explorer" => "Construye requests HTTP sin tocar HttpClient directamente.",
+            "History" => "Consulta el log de requests y repite ejecuciones guardadas.",
+            "Scenarios" => "Prepara secuencias de requests para flujos repetibles.",
+            "Reports" => "Observa resultados agregados y fallos recurrentes.",
+            "Settings" => "Configura el comportamiento global de la herramienta.",
+            "Plugins" => "Revisa los plugins instalados y su metadata.",
+            _ => "Navegación principal del workspace."
         };
     }
 

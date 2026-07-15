@@ -2,7 +2,9 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using BackendTestingStudio.Core.History;
+using BackendTestingStudio.Core.Plugins;
 using BackendTestingStudio.Http;
+using BackendTestingStudio.Plugins;
 using BackendTestingStudio.Storage;
 using BackendTestingStudio.UI.History;
 using BackendTestingStudio.UI.Components;
@@ -14,6 +16,7 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddBackendTestingStudioHttp();
 builder.Services.AddBackendTestingStudioStorage();
+builder.Services.AddSingleton<IPluginLoader, PluginLoader>();
 builder.Services.AddScoped<IRequestHistoryService, RequestHistoryService>();
 
 var app = builder.Build();

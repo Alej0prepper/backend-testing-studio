@@ -1,0 +1,116 @@
+@page "/plugins"
+@using BackendTestingStudio.Core.Plugins
+@inject IPluginLoader PluginLoader
+
+<PageTitle>Plugins</PageTitle>
+
+<section class="plugins-page">
+    <header class="hero card">
+        <div>
+            <span class="eyebrow">Extension system</span>
+            <h2>Plugins</h2>
+            <p>
+                Lista de plugins instalados y descubiertos automáticamente desde las implementaciones
+                registradas en el contenedor.
+            </p>
+        </div>
+
+        <div class="hero-metrics">
+            <div class="metric">
+                <span class="metric-label">Installed</span>
+                <strong>@_plugins.Count</strong>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Loader</span>
+                <strong>Auto-discovery</strong>
+            </div>
+        </div>
+    </header>
+
+    @if (_plugins.Count == 0)
+    {
+        <div class="card panel empty-state">No hay plugins instalados.</div>
+    }
+    else
+    {
+        <div class="plugins-grid">
+            @foreach (var plugin in _plugins)
+            {
+                <article class="card panel plugin-card">
+                    <div class="panel-header">
+                        <div>
+                            <span class="eyebrow">Plugin</span>
+                            <h3>@plugin.Name</h3>
+                        </div>
+                        <span class="count-pill">@plugin.Version</span>
+                    </div>
+
+                    <p>@plugin.Description</p>
+
+                    <div class="plugin-meta">
+                        <div>
+                            <span class="metric-label">Author</span>
+                            <strong>@plugin.Author</strong>
+                        </div>
+                        <div>
+                            <span class="metric-label">Endpoints</span>
+                            <strong>@plugin.Endpoints.Count</strong>
+                        </div>
+                        <div>
+                            <span class="metric-label">Scenarios</span>
+                            <strong>@plugin.Scenarios.Count</strong>
+                        </div>
+                        <div>
+                            <span class="metric-label">Payloads</span>
+                            <strong>@plugin.Payloads.Count</strong>
+                        </div>
+                        <div>
+                            <span class="metric-label">Variables</span>
+                            <strong>@plugin.Variables.Count</strong>
+                        </div>
+                    </div>
+
+                    @if (plugin.Endpoints.Count > 0)
+                    {
+                        <div class="section-block">
+                            <h4>Endpoints</h4>
+                            <div class="header-list">
+                                @foreach (var endpoint in plugin.Endpoints)
+                                {
+                                    <div class="header-row">
+                                        <strong>@endpoint.Method @endpoint.Route</strong>
+                                        <span>@endpoint.Name</span>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+
+                    @if (plugin.Scenarios.Count > 0)
+                    {
+                        <div class="section-block">
+                            <h4>Scenarios</h4>
+                            <ul class="feature-list">
+                                @foreach (var scenario in plugin.Scenarios)
+                                {
+                                    <li>
+                                        <span>@scenario.Name</span>
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                </article>
+            }
+        </div>
+    }
+</section>
+
+@code {
+    private IReadOnlyList<PluginDefinition> _plugins = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        _plugins = await PluginLoader.GetInstalledAsync();
+    }
+}
