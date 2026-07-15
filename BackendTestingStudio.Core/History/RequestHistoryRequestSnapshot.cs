@@ -1,4 +1,5 @@
 using System.Text.Json;
+using BackendTestingStudio.Core.Environments;
 using BackendTestingStudio.Core.Http;
 
 namespace BackendTestingStudio.Core.History;
@@ -38,11 +39,12 @@ public sealed record RequestHistoryRequestSnapshot
 
     public IReadOnlyList<RequestHistoryMultipartPart> MultipartParts { get; }
 
-    public HttpRequestDefinition ToHttpRequestDefinition()
+    public HttpRequestDefinition ToHttpRequestDefinition(EnvironmentAuthentication? authentication = null)
         => new(
             new Uri(Url, UriKind.Absolute),
             Headers,
-            body: BuildBody());
+            body: BuildBody(),
+            authentication: authentication.ToHttpAuthentication());
 
     private HttpRequestBody? BuildBody()
         => BodyKind switch

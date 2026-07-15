@@ -1,6 +1,11 @@
 ﻿@page "/environments"
 @using EnvironmentEntity = BackendTestingStudio.Core.Environments.Environment
 @using EnvironmentVariableEntity = BackendTestingStudio.Core.Environments.EnvironmentVariable
+@using EnvironmentAuthenticationEntity = BackendTestingStudio.Core.Environments.EnvironmentAuthentication
+@using EnvironmentAuthenticationKind = BackendTestingStudio.Core.Environments.EnvironmentAuthenticationKind
+@using EnvironmentAuthenticationBearer = BackendTestingStudio.Core.Environments.EnvironmentAuthenticationBearer
+@using EnvironmentAuthenticationBasic = BackendTestingStudio.Core.Environments.EnvironmentAuthenticationBasic
+@using EnvironmentAuthenticationApiKey = BackendTestingStudio.Core.Environments.EnvironmentAuthenticationApiKey
 @using IEnvironmentService = BackendTestingStudio.Core.Environments.IEnvironmentService
 @inject IEnvironmentService EnvironmentService
 
@@ -52,7 +57,53 @@
                     <span>Base URL</span>
                     <input @bind="_editor.BaseUrl" />
                 </label>
+
+                <label class="field">
+                    <span>Authentication</span>
+                    <select @bind="_editor.Authentication.Kind">
+                        @foreach (var kind in Enum.GetValues<EnvironmentAuthenticationKind>())
+                        {
+                            <option value="@kind">@kind</option>
+                        }
+                    </select>
+                </label>
             </div>
+
+            @if (_editor.Authentication.Kind == EnvironmentAuthenticationKind.Bearer)
+            {
+                <div class="form-grid">
+                    <label class="field">
+                        <span>Bearer token</span>
+                        <input placeholder="token-123" @bind="_editor.Authentication.BearerToken" />
+                    </label>
+                </div>
+            }
+            else if (_editor.Authentication.Kind == EnvironmentAuthenticationKind.Basic)
+            {
+                <div class="form-grid two-cols">
+                    <label class="field">
+                        <span>Username</span>
+                        <input placeholder="demo" @bind="_editor.Authentication.BasicUserName" />
+                    </label>
+                    <label class="field">
+                        <span>Password</span>
+                        <input placeholder="secret" type="password" @bind="_editor.Authentication.BasicPassword" />
+                    </label>
+                </div>
+            }
+            else if (_editor.Authentication.Kind == EnvironmentAuthenticationKind.ApiKey)
+            {
+                <div class="form-grid two-cols">
+                    <label class="field">
+                        <span>Header name</span>
+                        <input placeholder="X-API-Key" @bind="_editor.Authentication.ApiKeyHeaderName" />
+                    </label>
+                    <label class="field">
+                        <span>Value</span>
+                        <input placeholder="key-456" @bind="_editor.Authentication.ApiKeyValue" />
+                    </label>
+                </div>
+            }
 
             <div class="section-block">
                 <div class="section-header">
@@ -119,6 +170,7 @@
                             <div class="meta">
                                 <span>@environment.Variables.Count variables</span>
                                 <span>@environment.Headers.Count headers</span>
+                                <span>@(environment.Authentication is null ? "No auth" : environment.Authentication.Kind.ToString())</span>
                             </div>
                         </div>
                         <div class="item-actions">
@@ -218,6 +270,8 @@
 
         public string BaseUrl { get; set; } = string.Empty;
 
+        public AuthenticationEditorModel Authentication { get; } = new();
+
         public List<EditorEntry> Variables { get; } = [];
 
         public List<EditorEntry> Headers { get; } = [];
@@ -227,6 +281,7 @@
             Id = Guid.Empty;
             Name = string.Empty;
             BaseUrl = string.Empty;
+            Authentication.Clear();
             Variables.Clear();
             Headers.Clear();
             Variables.Add(new EditorEntry());
@@ -238,6 +293,7 @@
             Id = environment.Id;
             Name = environment.Name;
             BaseUrl = environment.BaseUrl;
+            Authentication.Load(environment.Authentication);
             Variables.Clear();
             Headers.Clear();
 
@@ -267,7 +323,67 @@
                 Headers
                     .Where(item => !item.IsEmpty)
                     .Select(item => new EnvironmentVariableEntity(item.Id, item.Name, item.Value))
-                    .ToArray());
+                    .ToArray(),
+                Authentication.ToAuthentication());
+    }
+
+    private sealed class AuthenticationEditorModel
+    {
+        public EnvironmentAuthenticationKind Kind { get; set; } = EnvironmentAuthenticationKind.None;
+
+        public string BearerToken { get; set; } = string.Empty;
+
+        public string BasicUserName { get; set; } = string.Empty;
+
+        public string BasicPassword { get; set; } = string.Empty;
+
+        public string ApiKeyHeaderName { get; set; } = string.Empty;
+
+        public string ApiKeyValue { get; set; } = string.Empty;
+
+        public void Clear()
+        {
+            Kind = EnvironmentAuthenticationKind.None;
+            BearerToken = string.Empty;
+            BasicUserName = string.Empty;
+            BasicPassword = string.Empty;
+            ApiKeyHeaderName = string.Empty;
+            ApiKeyValue = string.Empty;
+        }
+
+        public void Load(EnvironmentAuthenticationEntity? authentication)
+        {
+            Clear();
+
+            switch (authentication)
+            {
+                case EnvironmentAuthenticationBearer bearer:
+                    Kind = EnvironmentAuthenticationKind.Bearer;
+                    BearerToken = bearer.Token;
+                    return;
+                case EnvironmentAuthenticationBasic basic:
+                    Kind = EnvironmentAuthenticationKind.Basic;
+                    BasicUserName = basic.UserName;
+                    BasicPassword = basic.Password;
+                    return;
+                case EnvironmentAuthenticationApiKey apiKey:
+                    Kind = EnvironmentAuthenticationKind.ApiKey;
+                    ApiKeyHeaderName = apiKey.HeaderName;
+                    ApiKeyValue = apiKey.Value;
+                    return;
+                default:
+                    return;
+            }
+        }
+
+        public EnvironmentAuthenticationEntity? ToAuthentication()
+            => Kind switch
+            {
+                EnvironmentAuthenticationKind.Bearer when !string.IsNullOrWhiteSpace(BearerToken) => new EnvironmentAuthenticationBearer(BearerToken),
+                EnvironmentAuthenticationKind.Basic when !string.IsNullOrWhiteSpace(BasicUserName) || !string.IsNullOrWhiteSpace(BasicPassword) => new EnvironmentAuthenticationBasic(BasicUserName, BasicPassword),
+                EnvironmentAuthenticationKind.ApiKey when !string.IsNullOrWhiteSpace(ApiKeyHeaderName) => new EnvironmentAuthenticationApiKey(ApiKeyHeaderName, ApiKeyValue),
+                _ => null
+            };
     }
 
     private sealed class EditorEntry

@@ -37,6 +37,10 @@
     gap: 14px;
 }
 
+.form-grid.two-cols {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .field {
     display: grid;
     gap: 8px;
@@ -44,6 +48,7 @@
 }
 
 .field input,
+.field select,
 .row-item input {
     width: 100%;
     box-sizing: border-box;

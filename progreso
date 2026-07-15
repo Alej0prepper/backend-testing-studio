@@ -10,20 +10,19 @@ Fecha de revisión: 2026-07-14
 4. El sistema de ambientes ya está implementado con persistencia SQLite.
 5. La pantalla `API Explorer` ya está creada y usa `IHttpEngine`.
 6. El historial de requests ya quedó implementado con persistencia SQLite y pantalla `History`.
+7. La autenticación por ambiente ya está integrada y el motor HTTP la aplica automáticamente.
 
 ## Prompt aplicado más reciente
 
-**Prompt 6 - Historial**
+**Prompt 7 - Autenticación**
 
-Se implementó el historial de requests con:
+Se implementó la autenticación genérica con:
 
-- guardado automático de request y response
-- persistencia en SQLite
-- página `History`
-- repetición de requests guardados
-- replay usando `IHttpEngine`
+- Bearer
+- ApiKey
+- Basic
 
-El último prompt aplicado quedó en `Prompt 6 - Historial`.
+La autenticación se configura por `Environment`, se persiste en SQLite y se aplica automáticamente al ejecutar requests con `IHttpEngine`.
 
 ## Siguiente paso natural
 

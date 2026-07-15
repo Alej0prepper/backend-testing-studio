@@ -3,6 +3,7 @@
 @using System.Net
 @using EnvironmentEntity = BackendTestingStudio.Core.Environments.Environment
 @using EnvironmentVariableEntity = BackendTestingStudio.Core.Environments.EnvironmentVariable
+@using BackendTestingStudio.Core.Environments
 @using BackendTestingStudio.Core.History
 @using IEnvironmentService = BackendTestingStudio.Core.Environments.IEnvironmentService
 @using BackendTestingStudio.Core.Http
@@ -284,7 +285,8 @@
                 requestUri,
                 headers.Count == 0 ? null : headers,
                 queryParameters.Count == 0 ? null : queryParameters,
-                body);
+                body,
+                selectedEnvironment?.Authentication.ToHttpAuthentication());
 
             var stopwatch = Stopwatch.StartNew();
             var result = await ExecuteAsync(request);

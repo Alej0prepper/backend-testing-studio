@@ -1,5 +1,7 @@
 using BackendTestingStudio.Core.History;
+using BackendTestingStudio.Core.Environments;
 using BackendTestingStudio.Core.Http;
+using IEnvironmentService = BackendTestingStudio.Core.Environments.IEnvironmentService;
 
 namespace BackendTestingStudio.UI.History;
 
@@ -7,11 +9,13 @@ internal sealed class RequestHistoryService : IRequestHistoryService
 {
     private readonly IRequestHistoryRepository _repository;
     private readonly IHttpEngine _httpEngine;
+    private readonly IEnvironmentService _environmentService;
 
-    public RequestHistoryService(IRequestHistoryRepository repository, IHttpEngine httpEngine)
+    public RequestHistoryService(IRequestHistoryRepository repository, IHttpEngine httpEngine, IEnvironmentService environmentService)
     {
         _repository = repository;
         _httpEngine = httpEngine;
+        _environmentService = environmentService;
     }
 
     public Task<IReadOnlyList<RequestHistoryEntry>> GetAllAsync(CancellationToken cancellationToken = default)
@@ -31,8 +35,16 @@ internal sealed class RequestHistoryService : IRequestHistoryService
             throw new KeyNotFoundException($"History entry '{id}' was not found.");
         }
 
+        var environment = entry.EnvironmentId is null
+            ? null
+            : await _environmentService.GetByIdAsync(entry.EnvironmentId.Value, cancellationToken).ConfigureAwait(false);
+
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-        var result = await ExecuteAsync(entry.Request.Method, entry.Request.ToHttpRequestDefinition(), cancellationToken).ConfigureAwait(false);
+        var result = await ExecuteAsync(
+                entry.Request.Method,
+                entry.Request.ToHttpRequestDefinition(environment?.Authentication),
+                cancellationToken)
+            .ConfigureAwait(false);
         stopwatch.Stop();
 
         var repeated = new RequestHistoryEntry(

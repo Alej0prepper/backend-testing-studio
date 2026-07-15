@@ -7,13 +7,15 @@ public sealed record Environment
         string name,
         string baseUrl,
         IReadOnlyList<EnvironmentVariable>? variables = null,
-        IReadOnlyList<EnvironmentVariable>? headers = null)
+        IReadOnlyList<EnvironmentVariable>? headers = null,
+        EnvironmentAuthentication? authentication = null)
     {
         Id = id;
         Name = string.IsNullOrWhiteSpace(name) ? throw new ArgumentException("Name is required.", nameof(name)) : name.Trim();
         BaseUrl = string.IsNullOrWhiteSpace(baseUrl) ? throw new ArgumentException("BaseUrl is required.", nameof(baseUrl)) : baseUrl.Trim();
         Variables = variables ?? [];
         Headers = headers ?? [];
+        Authentication = authentication;
     }
 
     public Guid Id { get; }
@@ -25,4 +27,6 @@ public sealed record Environment
     public IReadOnlyList<EnvironmentVariable> Variables { get; }
 
     public IReadOnlyList<EnvironmentVariable> Headers { get; }
+
+    public EnvironmentAuthentication? Authentication { get; }
 }
