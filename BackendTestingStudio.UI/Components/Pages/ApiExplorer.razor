@@ -361,6 +361,7 @@
         try
         {
             var selectedEnvironment = ResolveEnvironment();
+            var variables = BuildVariables(selectedEnvironment);
             var requestUri = BuildRequestUri(selectedEnvironment?.BaseUrl, _request.Url);
             var headers = BuildHeaders(selectedEnvironment);
             var queryParameters = BuildQueryParameters();
@@ -370,7 +371,8 @@
                 headers.Count == 0 ? null : headers,
                 queryParameters.Count == 0 ? null : queryParameters,
                 body,
-                selectedEnvironment?.Authentication.ToHttpAuthentication());
+                selectedEnvironment?.Authentication.ToHttpAuthentication(),
+                variables.Count == 0 ? null : variables);
 
             var stopwatch = Stopwatch.StartNew();
             var result = await ExecuteAsync(request);
@@ -383,7 +385,8 @@
                 .ToDictionary(item => item.Key, item => string.Join(", ", item.Value), StringComparer.OrdinalIgnoreCase);
             _response.ElapsedMs = stopwatch.Elapsed.TotalMilliseconds;
 
-            await HistoryService.RecordAsync(CreateHistoryEntry(selectedEnvironment, _request.Method.ToString().ToUpperInvariant(), request, result, stopwatch.Elapsed));
+            var resolvedRequest = HttpRequestTemplateResolver.Resolve(request);
+            await HistoryService.RecordAsync(CreateHistoryEntry(selectedEnvironment, _request.Method.ToString().ToUpperInvariant(), resolvedRequest, result, stopwatch.Elapsed));
         }
         catch (Exception ex)
         {
@@ -455,11 +458,26 @@
         return query;
     }
 
+    private Dictionary<string, string?> BuildVariables(EnvironmentEntity? selectedEnvironment)
+    {
+        var variables = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+
+        if (selectedEnvironment is not null)
+        {
+            foreach (var variable in selectedEnvironment.Variables.Where(item => !string.IsNullOrWhiteSpace(item.Name)))
+            {
+                variables[variable.Name] = variable.Value;
+            }
+        }
+
+        return variables;
+    }
+
     private HttpRequestBody? BuildBody()
         => _request.BodyMode switch
         {
             ExplorerBodyMode.None => null,
-            ExplorerBodyMode.Json => new HttpRequestBody.Json(ParseJsonBody(_request.JsonBody)),
+            ExplorerBodyMode.Json => new HttpRequestBody.RawJson(_request.JsonBody),
             ExplorerBodyMode.Multipart => new HttpRequestBody.Multipart(
                 _request.MultipartParts
                     .Where(item => !string.IsNullOrWhiteSpace(item.Name))
@@ -486,12 +504,15 @@
                 request.Body switch
                 {
                     null => RequestHistoryBodyKind.None,
-                    HttpRequestBody.Json json => RequestHistoryBodyKind.Json,
+                    HttpRequestBody.Json => RequestHistoryBodyKind.Json,
+                    HttpRequestBody.RawJson => RequestHistoryBodyKind.Json,
                     HttpRequestBody.Multipart multipart => RequestHistoryBodyKind.Multipart,
                     _ => RequestHistoryBodyKind.None
                 },
                 request.Body is HttpRequestBody.Json jsonBody
                     ? System.Text.Json.JsonSerializer.Serialize(jsonBody.Value)
+                    : request.Body is HttpRequestBody.RawJson rawJsonBody
+                        ? rawJsonBody.Text
                     : null,
                 request.Body is HttpRequestBody.Multipart multipartBody
                     ? multipartBody.Parts.Select(part => new RequestHistoryMultipartPart(
@@ -527,17 +548,6 @@
 
         builder.Query = string.Join("&", queryParts);
         return builder.Uri.ToString();
-    }
-
-    private static object? ParseJsonBody(string body)
-    {
-        if (string.IsNullOrWhiteSpace(body))
-        {
-            return null;
-        }
-
-        using var document = System.Text.Json.JsonDocument.Parse(body);
-        return document.RootElement.Clone();
     }
 
     private sealed class ExplorerRequestModel

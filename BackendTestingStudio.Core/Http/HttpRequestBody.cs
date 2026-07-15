@@ -8,5 +8,7 @@ public abstract record HttpRequestBody
 
     public sealed record Json(object? Value, string? ContentType = "application/json") : HttpRequestBody;
 
+    public sealed record RawJson(string Text, string? ContentType = "application/json") : HttpRequestBody;
+
     public sealed record Multipart(IReadOnlyList<HttpMultipartPart> Parts) : HttpRequestBody;
 }

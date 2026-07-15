@@ -14,19 +14,20 @@ Fecha de revisión: 2026-07-15
 8. El modelo de plugins ya quedó definido en `Core`, sin loader ni runtime.
 9. El cargador de plugins ya descubre módulos registrados y los muestra en la UI.
 10. La biblioteca de payloads reutilizables ya quedó implementada con persistencia SQLite y se puede aplicar desde `API Explorer`.
+11. El motor HTTP ya resuelve variables runtime antes de ejecutar cada request.
 
 ## Prompt aplicado más reciente
 
-**Prompt 10 - Biblioteca de Payloads**
+**Prompt 11 - Variables**
 
-Se implementó una librería de payloads reutilizables con:
+Se implementó un sistema de variables runtime con:
 
-- modelo `PayloadDefinition` con nombre, descripción, JSON, variables y tags
-- persistencia SQLite para payloads, variables y tags
-- pantalla `Payloads` para crear, editar y eliminar payloads
-- integración en `API Explorer` para seleccionar y aplicar payloads al body JSON
+- soporte para placeholders tipo `{{Token}}`, `{{BrandId}}`, `{{ProductId}}`, `{{OrderId}}` y `{{UserId}}`
+- resolución automática en URL, headers, query parameters, autenticación y body
+- soporte de `RawJson` para aplicar variables antes de enviar el request
+- preservación de los valores resueltos en el historial para que `Repeat` siga funcionando
 
-El Explorer ahora puede renderizar variables del payload antes de enviar el request.
+El motor resuelve las variables usando el contexto del request y del ambiente seleccionado antes de enviar la petición.
 
 ## Siguiente paso natural
 

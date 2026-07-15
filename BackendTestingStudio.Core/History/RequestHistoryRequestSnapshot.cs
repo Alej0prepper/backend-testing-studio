@@ -1,4 +1,3 @@
-using System.Text.Json;
 using BackendTestingStudio.Core.Environments;
 using BackendTestingStudio.Core.Http;
 
@@ -40,25 +39,29 @@ public sealed record RequestHistoryRequestSnapshot
     public IReadOnlyList<RequestHistoryMultipartPart> MultipartParts { get; }
 
     public HttpRequestDefinition ToHttpRequestDefinition(EnvironmentAuthentication? authentication = null)
-        => new(
-            new Uri(Url, UriKind.Absolute),
-            Headers,
-            body: BuildBody(),
-            authentication: authentication.ToHttpAuthentication());
+        => ToHttpRequestDefinition(authentication, null);
 
-    private HttpRequestBody? BuildBody()
+    public HttpRequestDefinition ToHttpRequestDefinition(
+        EnvironmentAuthentication? authentication,
+        IReadOnlyDictionary<string, string?>? variables)
+        => new(
+            new Uri(HttpRequestTemplateResolver.ResolveText(Url, variables), UriKind.Absolute),
+            HttpRequestTemplateResolver.ResolveDictionary(Headers, variables),
+            body: BuildBody(variables),
+            authentication: HttpRequestTemplateResolver.ResolveAuthentication(authentication.ToHttpAuthentication(), variables),
+            variables: variables);
+
+    private HttpRequestBody? BuildBody(IReadOnlyDictionary<string, string?>? variables = null)
         => BodyKind switch
         {
             RequestHistoryBodyKind.None => null,
-            RequestHistoryBodyKind.Json => string.IsNullOrWhiteSpace(JsonBody)
-                ? new HttpRequestBody.Json(null)
-                : new HttpRequestBody.Json(JsonDocument.Parse(JsonBody).RootElement.Clone()),
+            RequestHistoryBodyKind.Json => new HttpRequestBody.RawJson(HttpRequestTemplateResolver.ResolveText(JsonBody, variables)),
             RequestHistoryBodyKind.Multipart => new HttpRequestBody.Multipart(
                 MultipartParts.Select(part => new HttpMultipartPart(
-                        part.Name,
-                        Convert.FromBase64String(part.Value),
-                        part.FileName,
-                        part.ContentType))
+                        HttpRequestTemplateResolver.ResolveText(part.Name, variables),
+                        Convert.FromBase64String(HttpRequestTemplateResolver.ResolveText(part.Value, variables)),
+                        HttpRequestTemplateResolver.ResolveNullableText(part.FileName, variables),
+                        HttpRequestTemplateResolver.ResolveNullableText(part.ContentType, variables)))
                     .ToArray()),
             _ => throw new NotSupportedException($"Body kind '{BodyKind}' is not supported.")
         };

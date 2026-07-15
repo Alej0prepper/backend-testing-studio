@@ -7,7 +7,8 @@ public sealed record HttpRequestDefinition
         IReadOnlyDictionary<string, string?>? headers = null,
         IReadOnlyDictionary<string, string?>? queryParameters = null,
         HttpRequestBody? body = null,
-        HttpAuthentication? authentication = null)
+        HttpAuthentication? authentication = null,
+        IReadOnlyDictionary<string, string?>? variables = null)
     {
         ArgumentNullException.ThrowIfNull(url);
 
@@ -16,6 +17,7 @@ public sealed record HttpRequestDefinition
         QueryParameters = queryParameters;
         Body = body;
         Authentication = authentication;
+        Variables = variables;
     }
 
     public Uri Url { get; }
@@ -27,4 +29,6 @@ public sealed record HttpRequestDefinition
     public HttpRequestBody? Body { get; }
 
     public HttpAuthentication? Authentication { get; }
+
+    public IReadOnlyDictionary<string, string?>? Variables { get; }
 }

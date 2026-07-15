@@ -127,6 +127,48 @@ public sealed class HttpEngineTests
         Assert.Equal("https://api.example.test/items/42?hard=true", handler.LastRequest!.Uri.ToString());
     }
 
+    [Fact]
+    public async Task PostAsync_ResolvesRuntimeVariablesBeforeSending()
+    {
+        var handler = new RecordingHttpMessageHandler(() => new HttpResponseMessage(HttpStatusCode.OK));
+        var engine = CreateEngine(handler);
+
+        await engine.PostAsync(
+            new HttpRequestDefinition(
+                new Uri("https://api.example.test/{{BrandId}}/items?existing=1"),
+                headers: new Dictionary<string, string?>
+                {
+                    ["X-Trace"] = "{{Token}}"
+                },
+                queryParameters: new Dictionary<string, string?>
+                {
+                    ["order"] = "{{OrderId}}"
+                },
+                body: new HttpRequestBody.RawJson("""
+                    {
+                      "userId": "{{UserId}}",
+                      "productId": "{{ProductId}}"
+                    }
+                    """),
+                authentication: new HttpAuthentication.Bearer("{{Token}}"),
+                variables: new Dictionary<string, string?>
+                {
+                    ["Token"] = "token-123",
+                    ["BrandId"] = "brand-9",
+                    ["OrderId"] = "order-7",
+                    ["ProductId"] = "product-5",
+                    ["UserId"] = "user-1"
+                }));
+
+        Assert.NotNull(handler.LastRequest);
+        Assert.Equal("https://api.example.test/brand-9/items?existing=1&order=order-7", handler.LastRequest!.Uri.ToString());
+        Assert.Equal("token-123", handler.LastRequest!.Headers["X-Trace"].Single());
+        Assert.Equal("Bearer", handler.LastRequest!.Authorization?.Scheme);
+        Assert.Equal("token-123", handler.LastRequest!.Authorization?.Parameter);
+        Assert.Contains("\"userId\": \"user-1\"", handler.LastRequest!.Body);
+        Assert.Contains("\"productId\": \"product-5\"", handler.LastRequest!.Body);
+    }
+
     private static IHttpEngine CreateEngine(RecordingHttpMessageHandler handler)
         => new HttpEngine(new HttpClient(handler));
 

@@ -32,12 +32,13 @@ public sealed class HttpEngine : IHttpEngine
 
     private async Task<HttpResponseResult> SendAsync(HttpMethod method, HttpRequestDefinition request, CancellationToken cancellationToken)
     {
-        var requestUri = BuildRequestUri(request.Url, request.QueryParameters);
+        var resolvedRequest = HttpRequestTemplateResolver.Resolve(request);
+        var requestUri = BuildRequestUri(resolvedRequest.Url, resolvedRequest.QueryParameters);
         using var message = new HttpRequestMessage(method, requestUri);
 
-        ApplyHeaders(message, request.Headers);
-        ApplyAuthentication(message, request.Authentication);
-        ApplyBody(message, request.Body);
+        ApplyHeaders(message, resolvedRequest.Headers);
+        ApplyAuthentication(message, resolvedRequest.Authentication);
+        ApplyBody(message, resolvedRequest.Body);
 
         using var response = await _httpClient.SendAsync(message, cancellationToken).ConfigureAwait(false);
         var content = response.Content is null
@@ -127,6 +128,12 @@ public sealed class HttpEngine : IHttpEngine
             {
                 var jsonText = JsonSerializer.Serialize(json.Value, JsonOptions);
                 var content = new StringContent(jsonText, Encoding.UTF8, json.ContentType ?? "application/json");
+                requestMessage.Content = content;
+                return;
+            }
+            case HttpRequestBody.RawJson rawJson:
+            {
+                var content = new StringContent(rawJson.Text, Encoding.UTF8, rawJson.ContentType ?? "application/json");
                 requestMessage.Content = content;
                 return;
             }

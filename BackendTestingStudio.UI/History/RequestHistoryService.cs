@@ -42,7 +42,9 @@ internal sealed class RequestHistoryService : IRequestHistoryService
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
         var result = await ExecuteAsync(
                 entry.Request.Method,
-                entry.Request.ToHttpRequestDefinition(environment?.Authentication),
+                entry.Request.ToHttpRequestDefinition(
+                    environment?.Authentication,
+                    environment?.Variables.ToDictionary(item => item.Name, item => item.Value, StringComparer.OrdinalIgnoreCase) as IReadOnlyDictionary<string, string?>),
                 cancellationToken)
             .ConfigureAwait(false);
         stopwatch.Stop();
