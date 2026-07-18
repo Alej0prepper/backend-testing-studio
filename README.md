@@ -1,100 +1,100 @@
 # Backend Testing Studio
 
-Backend Testing Studio es una herramienta local para probar APIs backend desde una interfaz web. El proyecto está organizado por capas y motores desacoplados para soportar exploración HTTP, ambientes, variables, historial, payloads reutilizables, assertions, escenarios, reportes y plugins.
+Backend Testing Studio is a local tool for testing backend APIs from a web interface. The project is organized in layers and decoupled engines to support HTTP exploration, environments, variables, history, reusable payloads, assertions, scenarios, reports, and plugins.
 
-El objetivo del producto es permitir definir pruebas reutilizables de APIs sin acoplar la UI a implementaciones concretas como `HttpClient`, SQLite o plugins específicos.
+The product goal is to define reusable API tests without coupling the UI to concrete implementations such as `HttpClient`, SQLite, or specific plugins.
 
-## Estado Actual
+## Current Status
 
-Funcional desde la UI:
+Functional from the UI:
 
-- Dashboard y layout principal.
-- Navegación lateral y superior.
-- Gestión de ambientes.
-- Variables por ambiente.
-- Headers por ambiente.
-- Autenticación por ambiente: Bearer, Basic y ApiKey.
-- API Explorer para enviar requests HTTP.
-- Métodos HTTP: GET, POST, PUT, PATCH y DELETE.
-- Headers, query parameters y body JSON.
-- Multipart básico.
-- Resolución de variables con formato `{{Variable}}`.
-- Historial de requests en SQLite.
-- Repetir requests desde History.
-- Biblioteca de payloads JSON reutilizables.
-- Catálogo de plugins instalados desde módulos compilados.
+- Dashboard and main layout.
+- Sidebar and top navigation.
+- Environment management.
+- Environment variables.
+- Environment headers.
+- Environment authentication: Bearer, Basic, and ApiKey.
+- API Explorer for sending HTTP requests.
+- HTTP methods: GET, POST, PUT, PATCH, and DELETE.
+- Headers, query parameters, and JSON body.
+- Basic multipart support.
+- Variable resolution using the `{{Variable}}` format.
+- Request history persisted in SQLite.
+- Repeat requests from History.
+- Reusable JSON payload library.
+- Installed plugin catalog from compiled modules.
 
-Implementado como motor o librería, pero todavía sin pantalla completa de operación:
+Implemented as engines or libraries, but not yet exposed through a complete operating screen:
 
 - Assertion Engine.
 - Scenario Engine.
 - Reporting Engine.
-- Exportación de reportes a HTML, Markdown y JSON.
+- Report export to HTML, Markdown, and JSON.
 
-Plugins declarativos incluidos:
+Included declarative plugins:
 
 - Swagger PetStore.
 - DummyJSON.
 
-Limitaciones actuales:
+Current limitations:
 
-- Los plugins declarativos bajo `plugins/` ya tienen estructura, payloads, assertions y escenarios, pero todavía no se cargan ni ejecutan automáticamente desde la UI.
-- La UI de Scenarios todavía no permite crear o ejecutar escenarios.
-- La UI de Reports todavía no lista ejecuciones ni exporta reportes desde pantalla.
-- OAuth no está implementado.
+- Declarative plugins under `plugins/` already include structure, payloads, assertions, and scenarios, but they are not automatically loaded or executed from the UI yet.
+- The Scenarios UI does not yet allow creating or running scenarios.
+- The Reports UI does not yet list executions or export reports from the screen.
+- OAuth is not implemented.
 
-## Requisitos
+## Requirements
 
-- Linux, macOS o Windows con terminal.
-- .NET SDK compatible con los proyectos del repositorio.
-- Navegador web moderno.
+- Linux, macOS, or Windows with a terminal.
+- .NET SDK compatible with the repository projects.
+- Modern web browser.
 - Git.
 
-El proyecto usa SQLite para persistencia local. La base de datos se genera automáticamente al ejecutar la aplicación.
+The project uses SQLite for local persistence. The database is generated automatically when the application runs.
 
-## Cómo Ejecutar
+## How To Run
 
-Desde la raíz del repositorio:
+From the repository root:
 
 ```bash
 ./run.sh
 ```
 
-Alternativa directa con `dotnet`:
+Direct `dotnet` alternative:
 
 ```bash
 dotnet run --project BackendTestingStudio.UI/BackendTestingStudio.UI.csproj
 ```
 
-Cuando la aplicación levante, la terminal mostrará una línea similar a:
+When the application starts, the terminal will show a line similar to:
 
 ```text
 Now listening on: http://127.0.0.1:XXXXX
 ```
 
-Abre esa URL en el navegador. El puerto puede cambiar en cada ejecución.
+Open that URL in the browser. The port can change on each run.
 
-Para detener la aplicación:
+To stop the application:
 
 ```text
 Ctrl+C
 ```
 
-## Cómo Probar
+## How To Test
 
-Compilar toda la solución:
+Build the full solution:
 
 ```bash
 dotnet build BackendTestingStudio.sln
 ```
 
-Ejecutar todas las pruebas:
+Run all tests:
 
 ```bash
 dotnet test BackendTestingStudio.sln
 ```
 
-Ejecutar pruebas de un proyecto específico:
+Run tests for a specific project:
 
 ```bash
 dotnet test BackendTestingStudio.Http.Tests/BackendTestingStudio.Http.Tests.csproj
@@ -105,88 +105,88 @@ dotnet test BackendTestingStudio.Reporting.Tests/BackendTestingStudio.Reporting.
 dotnet test BackendTestingStudio.Plugins.Tests/BackendTestingStudio.Plugins.Tests.csproj
 ```
 
-## Estructura del Repositorio
+## Repository Structure
 
 ```text
 BackendTestingStudio/
-├── BackendTestingStudio.UI/             # Aplicación web y pantallas
-├── BackendTestingStudio.Core/           # Modelos, contratos y reglas centrales
-├── BackendTestingStudio.Http/           # Motor HTTP desacoplado
-├── BackendTestingStudio.Storage/        # Persistencia SQLite y repositorios
-├── BackendTestingStudio.Assertions/     # Motor de validaciones
-├── BackendTestingStudio.Scenarios/      # Motor de ejecución de escenarios
-├── BackendTestingStudio.Reporting/      # Generación y exportación de reportes
-├── BackendTestingStudio.Plugins/        # Modelo e infraestructura de plugins
-├── BackendTestingStudio.*.Tests/        # Pruebas automatizadas por módulo
-├── plugins/                             # Plugins declarativos de ejemplo
-├── ARCHITECTURE.md                      # Arquitectura general
-├── PROJECT_RULES.md                     # Reglas obligatorias del proyecto
-├── CODING_STANDARDS.md                  # Estándares de código
-├── CONTRIBUTING.md                      # Guía de contribución
-├── PLUGIN_SPEC.md                       # Especificación de plugins
-├── ROADMAP.md                           # Plan del producto por versiones
-├── USER_MANUAL.md                       # Manual de usuario
-├── Promts_guide.md                      # Guía de prompts aplicados
-├── progreso                             # Seguimiento de avance por prompt
-└── run.sh                               # Script de ejecución local
+├── BackendTestingStudio.UI/             # Web application and screens
+├── BackendTestingStudio.Core/           # Core models, contracts, and rules
+├── BackendTestingStudio.Http/           # Decoupled HTTP engine
+├── BackendTestingStudio.Storage/        # SQLite persistence and repositories
+├── BackendTestingStudio.Assertions/     # Validation engine
+├── BackendTestingStudio.Scenarios/      # Scenario execution engine
+├── BackendTestingStudio.Reporting/      # Report generation and export
+├── BackendTestingStudio.Plugins/        # Plugin model and base infrastructure
+├── BackendTestingStudio.*.Tests/        # Automated tests by module
+├── plugins/                             # Example declarative plugins
+├── ARCHITECTURE.md                      # General architecture
+├── PROJECT_RULES.md                     # Mandatory project rules
+├── CODING_STANDARDS.md                  # Coding standards
+├── CONTRIBUTING.md                      # Contribution guide
+├── PLUGIN_SPEC.md                       # Plugin specification
+├── ROADMAP.md                           # Product roadmap by version
+├── USER_MANUAL.md                       # User manual
+├── Promts_guide.md                      # Applied prompts guide
+├── progreso                             # Prompt progress tracking
+└── run.sh                               # Local run script
 ```
 
-## Responsabilidad de Cada Proyecto
+## Project Responsibilities
 
 ### BackendTestingStudio.UI
 
-Contiene la aplicación web. Sus responsabilidades son:
+Contains the web application. Its responsibilities are:
 
-- Renderizar la interfaz.
-- Recibir interacción del usuario.
-- Orquestar casos de uso llamando servicios.
-- Mostrar resultados.
+- Render the interface.
+- Receive user interaction.
+- Orchestrate use cases by calling services.
+- Display results.
 
-Regla importante: la UI no debe usar `HttpClient` directamente. Toda ejecución HTTP debe pasar por `IHttpEngine`.
+Important rule: the UI must not use `HttpClient` directly. Every HTTP execution must go through `IHttpEngine`.
 
 ### BackendTestingStudio.Core
 
-Contiene contratos, modelos y abstracciones centrales. Debe mantenerse independiente de UI, SQLite, motores concretos y plugins externos.
+Contains core contracts, models, and abstractions. It must remain independent from UI, SQLite, concrete engines, and external plugins.
 
-Responsabilidades:
+Responsibilities:
 
-- Entidades del dominio.
-- DTOs compartidos.
-- Interfaces principales.
-- Contratos para servicios, repositorios y motores.
+- Domain entities.
+- Shared DTOs.
+- Main interfaces.
+- Contracts for services, repositories, and engines.
 
 ### BackendTestingStudio.Http
 
-Implementa el motor HTTP genérico.
+Implements the generic HTTP engine.
 
-Responsabilidades:
+Responsibilities:
 
-- Ejecutar requests GET, POST, PUT, PATCH y DELETE.
-- Resolver headers.
-- Resolver query parameters.
-- Enviar JSON.
-- Enviar multipart.
-- Aplicar autenticación Bearer, Basic y ApiKey.
-- Resolver variables runtime antes de ejecutar el request.
+- Execute GET, POST, PUT, PATCH, and DELETE requests.
+- Resolve headers.
+- Resolve query parameters.
+- Send JSON.
+- Send multipart content.
+- Apply Bearer, Basic, and ApiKey authentication.
+- Resolve runtime variables before executing the request.
 
 ### BackendTestingStudio.Storage
 
-Implementa persistencia local con SQLite.
+Implements local persistence with SQLite.
 
-Responsabilidades:
+Responsibilities:
 
-- Repositorios.
-- Inicialización de base de datos.
-- CRUD de ambientes.
-- CRUD de payloads.
-- Persistencia de historial.
-- Persistencia de variables y headers.
+- Repositories.
+- Database initialization.
+- Environment CRUD.
+- Payload CRUD.
+- History persistence.
+- Variable and header persistence.
 
 ### BackendTestingStudio.Assertions
 
-Implementa validaciones desacopladas de cualquier API específica.
+Implements validations decoupled from any specific API.
 
-Soporta:
+Supports:
 
 - StatusCode.
 - JSONPath.
@@ -195,34 +195,34 @@ Soporta:
 - Contains.
 - Null.
 - NotNull.
-- Tiempo máximo.
+- Maximum time.
 
 ### BackendTestingStudio.Scenarios
 
-Implementa el motor de escenarios.
+Implements the scenario engine.
 
-Un escenario puede tener múltiples steps. Cada step puede:
+A scenario can have multiple steps. Each step can:
 
-- Ejecutar requests.
-- Guardar variables.
-- Ejecutar assertions.
-- Usar variables de steps anteriores.
-- Detener el flujo cuando falle.
+- Execute requests.
+- Save variables.
+- Execute assertions.
+- Use variables from previous steps.
+- Stop the flow when it fails.
 
 ### BackendTestingStudio.Reporting
 
-Genera reportes de ejecución.
+Generates execution reports.
 
-Cada reporte puede incluir:
+Each report can include:
 
-- Resumen.
-- Tiempo total.
+- Summary.
+- Total time.
 - Steps.
 - Assertions.
 - Variables.
-- Errores.
+- Errors.
 
-Formatos soportados:
+Supported formats:
 
 - HTML.
 - Markdown.
@@ -230,130 +230,130 @@ Formatos soportados:
 
 ### BackendTestingStudio.Plugins
 
-Define el modelo de plugins y su infraestructura base.
+Defines the plugin model and its base infrastructure.
 
-Un plugin puede declarar:
+A plugin can declare:
 
-- Nombre.
-- Versión.
-- Autor.
-- Descripción.
+- Name.
+- Version.
+- Author.
+- Description.
 - Endpoints.
-- Escenarios.
+- Scenarios.
 - Payloads.
 - Variables.
 - Assertions.
-- Ambientes.
+- Environments.
 
-## Pantallas Disponibles
+## Available Screens
 
 ### Dashboard
 
-Vista principal del workspace. Muestra el estado general de la aplicación y acceso a las secciones principales.
+Main workspace view. Shows the general application state and access to the main sections.
 
 ### Environments
 
-Permite crear, editar y eliminar ambientes.
+Allows creating, editing, and deleting environments.
 
-Un ambiente puede contener:
+An environment can contain:
 
-- Nombre.
+- Name.
 - Base URL.
 - Variables.
 - Headers.
-- Configuración de autenticación.
+- Authentication configuration.
 
 ### API Explorer
 
-Permite construir y ejecutar un request manualmente.
+Allows manually building and executing a request.
 
-Flujo básico:
+Basic flow:
 
-1. Seleccionar un Environment.
-2. Elegir método HTTP.
-3. Escribir URL o path.
-4. Agregar headers si aplica.
-5. Agregar query parameters si aplica.
-6. Agregar body JSON si aplica.
-7. Seleccionar payload si aplica.
-8. Enviar request.
-9. Revisar status, headers, body y tiempo.
+1. Select an Environment.
+2. Choose the HTTP method.
+3. Write a URL or path.
+4. Add headers when needed.
+5. Add query parameters when needed.
+6. Add a JSON body when needed.
+7. Select a payload when needed.
+8. Send the request.
+9. Review status, headers, body, and time.
 
 ### Payloads
 
-Permite guardar JSON reutilizable.
+Allows saving reusable JSON.
 
-Cada payload puede tener:
+Each payload can have:
 
-- Nombre.
-- Descripción.
+- Name.
+- Description.
 - JSON.
 - Variables.
 - Tags.
 
 ### History
 
-Guarda automáticamente requests ejecutados desde API Explorer.
+Automatically saves requests executed from API Explorer.
 
-Permite revisar:
+Allows reviewing:
 
-- Fecha.
-- Método.
+- Date.
+- Method.
 - URL.
 - Environment.
 - Headers.
 - Body.
 - Response.
-- Tiempo.
+- Time.
 - Status.
 
-También permite repetir un request.
+It also allows repeating a request.
 
 ### Plugins
 
-Muestra plugins instalados desde el sistema actual de módulos compilados.
+Shows installed plugins from the current compiled-module system.
 
-Nota: los plugins declarativos en carpetas JSON existen en `plugins/`, pero la integración completa de carga y ejecución desde UI todavía está pendiente.
+Note: declarative plugins in JSON folders exist under `plugins/`, but full loading and execution integration from the UI is still pending.
 
-## Plugins Incluidos
+## Included Plugins
 
 ### Swagger PetStore
 
-Ubicación:
+Location:
 
 ```text
 plugins/swagger-petstore/
 ```
 
-Incluye:
+Includes:
 
-- Crear mascota.
-- Consultar mascota.
-- Actualizar mascota.
-- Eliminar mascota.
-- Escenarios CRUD.
-- Payloads de creación y actualización.
-- Assertions de status y contenido.
+- Create pet.
+- Get pet.
+- Update pet.
+- Delete pet.
+- CRUD scenarios.
+- Create and update payloads.
+- Status and content assertions.
 
 ### DummyJSON
 
-Ubicación:
+Location:
 
 ```text
 plugins/dummyjson/
 ```
 
-Incluye:
+Includes:
 
 - Login.
 - Products.
 - Cart.
 - Users.
-- Escenarios completos de flujo.
-- Payloads reutilizables.
-- Assertions por módulo.
+- Complete workflow scenarios.
+- Reusable payloads.
+- Assertions by module.
 
-## Estructura Esperada de un Plugin Declarativo
+## Expected Declarative Plugin Structure
 
 ```text
 plugins/{plugin-id}/
@@ -372,44 +372,44 @@ plugins/{plugin-id}/
     └── {scenario}.json
 ```
 
-La especificación completa está en `PLUGIN_SPEC.md`.
+The full specification is available in `PLUGIN_SPEC.md`.
 
-## Reglas de Arquitectura
+## Architecture Rules
 
-Las decisiones nuevas deben respetar:
+New decisions must respect:
 
 - `ARCHITECTURE.md`
 - `PROJECT_RULES.md`
 - `PLUGIN_SPEC.md`
 
-Reglas clave:
+Key rules:
 
-- La UI nunca accede directamente a `HttpClient`.
-- Toda llamada HTTP pasa por `IHttpEngine`.
-- El Core nunca depende de Plugins.
-- El Core nunca depende de UI.
-- Los plugins no conocen la implementación interna del motor.
-- La persistencia SQLite debe estar detrás de repositorios o servicios.
-- No duplicar lógica.
-- Todo código debe ser testeable.
-- Cada entidad debe tener una única responsabilidad.
+- The UI never accesses `HttpClient` directly.
+- Every HTTP call goes through `IHttpEngine`.
+- Core never depends on Plugins.
+- Core never depends on UI.
+- Plugins do not know the engine's internal implementation.
+- SQLite persistence must stay behind repositories or services.
+- Do not duplicate logic.
+- All code must be testable.
+- Every entity must have a single responsibility.
 
-## Flujo de Datos
+## Data Flow
 
-Flujo manual desde API Explorer:
+Manual flow from API Explorer:
 
 ```text
 UI
-→ Servicio de aplicación
+→ Application service
 → IHttpEngine
-→ Autenticación / variables / headers / query / body
-→ API externa
+→ Authentication / variables / headers / query / body
+→ External API
 → IHttpEngineResponse
-→ Historial SQLite
+→ SQLite history
 → UI
 ```
 
-Flujo esperado para escenarios:
+Expected scenario flow:
 
 ```text
 Scenario Engine
@@ -420,78 +420,78 @@ Scenario Engine
 → Reporting Engine
 ```
 
-Flujo esperado para plugins:
+Expected plugin flow:
 
 ```text
 Plugin
 → Endpoints / Payloads / Variables / Scenarios
-→ Scenario Engine o API Explorer
+→ Scenario Engine or API Explorer
 → IHttpEngine
 ```
 
-## Persistencia Local
+## Local Persistence
 
-SQLite se usa para datos locales de la aplicación.
+SQLite is used for local application data.
 
-Datos persistidos actualmente:
+Currently persisted data:
 
-- Ambientes.
-- Variables de ambiente.
-- Headers de ambiente.
+- Environments.
+- Environment variables.
+- Environment headers.
 - Payloads.
-- Historial de requests.
+- Request history.
 
-La base de datos es un artefacto local generado al ejecutar la aplicación y no debe subirse al repositorio.
+The database is a local artifact generated when the application runs and must not be committed to the repository.
 
-## Git y Push
+## Git And Push
 
-Ver remotos:
+View remotes:
 
 ```bash
 git remote -v
 ```
 
-Primer push de la rama `master`:
+First push for the `master` branch:
 
 ```bash
 git push -u origin master
 ```
 
-Push posterior:
+Subsequent push:
 
 ```bash
 git push
 ```
 
-Si Git pide usuario o token, autentica desde tu terminal local.
+If Git asks for a username or token, authenticate from your local terminal.
 
-## Problemas Conocidos
+## Known Issues
 
-### Límite de inotify en Linux
+### Linux inotify Limit
 
-Si aparece un error similar a:
+If an error similar to this appears:
 
 ```text
 The configured user limit (128) on the number of inotify instances has been reached
 ```
 
-Ejecuta con:
+Run with:
 
 ```bash
 DOTNET_USE_POLLING_FILE_WATCHER=1 ./run.sh
 ```
 
-O aumenta el límite de watchers del sistema.
+Or increase the system watcher limit.
 
-### Error 404 en `_framework/blazor.web.js`
+### 404 Error For `_framework/blazor.web.js`
 
-Si el navegador o logs muestran:
+If the browser or logs show:
 
 ```text
 GET /_framework/blazor.web.js 404
 ```
 
-Prueba:
+Try:
 
 ```bash
 dotnet restore
@@ -499,30 +499,30 @@ dotnet build BackendTestingStudio.sln
 ./run.sh
 ```
 
-También verifica que estás abriendo la URL exacta que imprime `dotnet run`, porque el puerto cambia.
+Also verify that you are opening the exact URL printed by `dotnet run`, because the port changes.
 
-### Warning de SQLitePCLRaw
+### SQLitePCLRaw Warning
 
-Puede aparecer una advertencia de vulnerabilidad para una versión transitiva de SQLite. El proyecto puede compilar, pero conviene actualizar paquetes en una iteración dedicada para cerrar esa alerta.
+A vulnerability warning may appear for a transitive SQLite package version. The project can compile, but dependencies should be updated in a dedicated iteration to close that alert.
 
-## Documentación Relacionada
+## Related Documentation
 
-- `ARCHITECTURE.md`: arquitectura y separación de responsabilidades.
-- `PROJECT_RULES.md`: reglas obligatorias.
-- `CODING_STANDARDS.md`: convenciones de código.
-- `CONTRIBUTING.md`: cómo contribuir.
-- `PLUGIN_SPEC.md`: contrato de plugins.
-- `PLUGIN_CREATION_GUIDE.md`: guia practica para crear plugins desde una API.
-- `ROADMAP.md`: planificación por versiones.
-- `USER_MANUAL.md`: manual de uso paso a paso.
-- `progreso`: seguimiento de prompts aplicados.
+- `ARCHITECTURE.md`: architecture and responsibility separation.
+- `PROJECT_RULES.md`: mandatory rules.
+- `CODING_STANDARDS.md`: coding conventions.
+- `CONTRIBUTING.md`: how to contribute.
+- `PLUGIN_SPEC.md`: plugin contract.
+- `PLUGIN_CREATION_GUIDE.md`: practical guide for creating plugins from an API.
+- `ROADMAP.md`: roadmap by version.
+- `USER_MANUAL.md`: step-by-step user manual.
+- `progreso`: applied prompt tracking.
 
-## Próximos Pasos Técnicos
+## Technical Next Steps
 
-1. Integrar carga real de plugins declarativos desde `plugins/`.
-2. Crear UI para ejecutar escenarios.
-3. Conectar Scenario Engine con Reporting Engine desde la UI.
-4. Agregar pantalla de Reports.
-5. Permitir exportar reportes desde la aplicación.
-6. Endurecer validaciones de JSON plugin contra `PLUGIN_SPEC.md`.
-7. Actualizar dependencias con advertencias de seguridad.
+1. Integrate real declarative plugin loading from `plugins/`.
+2. Create UI for running scenarios.
+3. Connect Scenario Engine with Reporting Engine from the UI.
+4. Add the Reports screen.
+5. Allow exporting reports from the application.
+6. Harden JSON plugin validation against `PLUGIN_SPEC.md`.
+7. Update dependencies with security warnings.
