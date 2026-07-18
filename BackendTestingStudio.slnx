@@ -5,6 +5,7 @@
   <Project Path="BackendTestingStudio.Http/BackendTestingStudio.Http.csproj" />
   <Project Path="BackendTestingStudio.Plugins/BackendTestingStudio.Plugins.csproj" />
   <Project Path="BackendTestingStudio.Reporting/BackendTestingStudio.Reporting.csproj" />
+  <Project Path="BackendTestingStudio.Reporting.Tests/BackendTestingStudio.Reporting.Tests.csproj" />
   <Project Path="BackendTestingStudio.Scenarios/BackendTestingStudio.Scenarios.csproj" />
   <Project Path="BackendTestingStudio.Scenarios.Tests/BackendTestingStudio.Scenarios.Tests.csproj" />
   <Project Path="BackendTestingStudio.Storage/BackendTestingStudio.Storage.csproj" />
