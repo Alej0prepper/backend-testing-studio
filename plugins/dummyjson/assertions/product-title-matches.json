@@ -1,0 +1,10 @@
+{
+  "id": "product-title-matches",
+  "type": "JSONPath",
+  "target": "body",
+  "expected": "{{ProductTitle}}",
+  "description": "The response product title must match ProductTitle.",
+  "severity": "Error",
+  "message": "Expected response $.title to match {{ProductTitle}}.",
+  "jsonPath": "$.title"
+}

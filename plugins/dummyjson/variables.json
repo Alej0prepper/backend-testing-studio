@@ -1,0 +1,134 @@
+[
+  {
+    "name": "Username",
+    "type": "string",
+    "defaultValue": "emilys",
+    "required": true,
+    "sensitive": false,
+    "description": "DummyJSON username used for login.",
+    "scope": "scenario",
+    "exportable": true
+  },
+  {
+    "name": "Password",
+    "type": "string",
+    "defaultValue": "emilyspass",
+    "required": true,
+    "sensitive": true,
+    "description": "DummyJSON password used for login.",
+    "scope": "scenario",
+    "exportable": false
+  },
+  {
+    "name": "ExpiresInMins",
+    "type": "number",
+    "defaultValue": "30",
+    "required": false,
+    "sensitive": false,
+    "description": "Access token lifetime for login.",
+    "scope": "scenario",
+    "exportable": true
+  },
+  {
+    "name": "AccessToken",
+    "type": "string",
+    "defaultValue": "",
+    "required": false,
+    "sensitive": true,
+    "description": "JWT access token captured from login.",
+    "scope": "runtime",
+    "exportable": false,
+    "computed": true
+  },
+  {
+    "name": "RefreshToken",
+    "type": "string",
+    "defaultValue": "",
+    "required": false,
+    "sensitive": true,
+    "description": "Refresh token captured from login.",
+    "scope": "runtime",
+    "exportable": false,
+    "computed": true
+  },
+  {
+    "name": "UserId",
+    "type": "number",
+    "defaultValue": "1",
+    "required": true,
+    "sensitive": false,
+    "description": "DummyJSON user identifier.",
+    "scope": "scenario",
+    "exportable": true
+  },
+  {
+    "name": "ProductId",
+    "type": "number",
+    "defaultValue": "1",
+    "required": true,
+    "sensitive": false,
+    "description": "DummyJSON product identifier.",
+    "scope": "scenario",
+    "exportable": true
+  },
+  {
+    "name": "ProductSearch",
+    "type": "string",
+    "defaultValue": "phone",
+    "required": true,
+    "sensitive": false,
+    "description": "Search term used by the product search scenario.",
+    "scope": "scenario",
+    "exportable": true
+  },
+  {
+    "name": "ProductTitle",
+    "type": "string",
+    "defaultValue": "Backend Testing Studio Product",
+    "required": true,
+    "sensitive": false,
+    "description": "Product title used by simulated product creation.",
+    "scope": "scenario",
+    "exportable": true
+  },
+  {
+    "name": "CartId",
+    "type": "number",
+    "defaultValue": "1",
+    "required": true,
+    "sensitive": false,
+    "description": "DummyJSON cart identifier.",
+    "scope": "scenario",
+    "exportable": true
+  },
+  {
+    "name": "Quantity",
+    "type": "number",
+    "defaultValue": "2",
+    "required": true,
+    "sensitive": false,
+    "description": "Product quantity used in cart scenarios.",
+    "scope": "scenario",
+    "exportable": true
+  },
+  {
+    "name": "FirstName",
+    "type": "string",
+    "defaultValue": "Backend",
+    "required": true,
+    "sensitive": false,
+    "description": "First name used by simulated user creation.",
+    "scope": "scenario",
+    "exportable": true
+  },
+  {
+    "name": "LastName",
+    "type": "string",
+    "defaultValue": "Tester",
+    "required": true,
+    "sensitive": false,
+    "description": "Last name used by simulated user creation.",
+    "scope": "scenario",
+    "exportable": true
+  }
+]

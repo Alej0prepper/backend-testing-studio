@@ -1,0 +1,10 @@
+{
+  "id": "first-name-matches",
+  "type": "JSONPath",
+  "target": "body",
+  "expected": "{{FirstName}}",
+  "description": "The response first name must match FirstName.",
+  "severity": "Error",
+  "message": "Expected response $.firstName to match {{FirstName}}.",
+  "jsonPath": "$.firstName"
+}

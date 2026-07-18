@@ -1,0 +1,18 @@
+{
+  "id": "cart-update",
+  "description": "Simulated cart update body.",
+  "contentType": "application/json",
+  "variables": [
+    "ProductId",
+    "Quantity"
+  ],
+  "content": {
+    "merge": true,
+    "products": [
+      {
+        "id": "{{ProductId}}",
+        "quantity": "{{Quantity}}"
+      }
+    ]
+  }
+}

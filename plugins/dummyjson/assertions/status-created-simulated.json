@@ -1,0 +1,10 @@
+{
+  "id": "status-created-simulated",
+  "type": "StatusCode",
+  "target": "status",
+  "expected": 201,
+  "description": "Simulated creation should return HTTP 201.",
+  "severity": "Error",
+  "message": "Expected DummyJSON simulated creation to return HTTP 201.",
+  "statusCode": 201
+}

@@ -1,0 +1,10 @@
+{
+  "id": "username-matches",
+  "type": "JSONPath",
+  "target": "body",
+  "expected": "{{Username}}",
+  "description": "The login response username must match the request.",
+  "severity": "Error",
+  "message": "Expected response $.username to match {{Username}}.",
+  "jsonPath": "$.username"
+}

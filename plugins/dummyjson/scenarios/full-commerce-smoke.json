@@ -1,0 +1,124 @@
+{
+  "id": "full-commerce-smoke",
+  "name": "Full commerce smoke",
+  "description": "Login, verify auth user, read products, create a cart and inspect the logged-in user's carts.",
+  "tags": [
+    "auth",
+    "products",
+    "carts",
+    "users",
+    "smoke"
+  ],
+  "onFailure": "Stop",
+  "variables": {
+    "Limit": "5",
+    "Skip": "0"
+  },
+  "steps": [
+    {
+      "execute": "login",
+      "with": {
+        "payload": "login-request"
+      },
+      "saveVariables": [
+        {
+          "name": "AccessToken",
+          "source": "JsonPath",
+          "jsonPath": "$.accessToken",
+          "required": true
+        },
+        {
+          "name": "UserId",
+          "source": "JsonPath",
+          "jsonPath": "$.id",
+          "required": true
+        }
+      ],
+      "assertions": [
+        "status-ok",
+        "access-token-present"
+      ],
+      "enabled": true
+    },
+    {
+      "execute": "get-auth-user",
+      "with": {
+        "AccessToken": "{{AccessToken}}"
+      },
+      "assertions": [
+        "status-ok",
+        "user-id-matches"
+      ],
+      "enabled": true
+    },
+    {
+      "execute": "list-products",
+      "with": {
+        "Limit": "5",
+        "Skip": "0"
+      },
+      "assertions": [
+        "status-ok",
+        "products-array-present"
+      ],
+      "enabled": true
+    },
+    {
+      "execute": "get-product",
+      "with": {
+        "ProductId": "{{ProductId}}"
+      },
+      "assertions": [
+        "status-ok",
+        "product-id-matches"
+      ],
+      "enabled": true
+    },
+    {
+      "execute": "add-cart",
+      "with": {
+        "payload": "cart-add"
+      },
+      "saveVariables": [
+        {
+          "name": "CartId",
+          "source": "JsonPath",
+          "jsonPath": "$.id",
+          "required": true
+        }
+      ],
+      "assertions": [
+        "status-created-simulated",
+        "cart-user-id-matches"
+      ],
+      "enabled": true
+    },
+    {
+      "execute": "get-user-carts",
+      "with": {
+        "UserId": "{{UserId}}"
+      },
+      "assertions": [
+        "status-ok",
+        "carts-array-present"
+      ],
+      "enabled": true
+    },
+    {
+      "execute": "get-user",
+      "with": {
+        "UserId": "{{UserId}}"
+      },
+      "assertions": [
+        "status-ok",
+        "user-id-matches"
+      ],
+      "enabled": true
+    }
+  ],
+  "outputs": [
+    "AccessToken",
+    "UserId",
+    "CartId"
+  ]
+}

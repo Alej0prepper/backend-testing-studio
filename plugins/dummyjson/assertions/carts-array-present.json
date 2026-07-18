@@ -1,0 +1,10 @@
+{
+  "id": "carts-array-present",
+  "type": "JSONPath",
+  "target": "body",
+  "expected": "NotNull",
+  "description": "Cart list response must include carts.",
+  "severity": "Error",
+  "message": "Expected response $.carts to be present.",
+  "jsonPath": "$.carts"
+}

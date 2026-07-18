@@ -1,0 +1,10 @@
+{
+  "id": "status-ok",
+  "type": "StatusCode",
+  "target": "status",
+  "expected": 200,
+  "description": "The operation should return HTTP 200.",
+  "severity": "Error",
+  "message": "Expected DummyJSON to return HTTP 200.",
+  "statusCode": 200
+}

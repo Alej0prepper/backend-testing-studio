@@ -1,0 +1,96 @@
+{
+  "id": "products",
+  "name": "Products",
+  "description": "Product catalog endpoints for DummyJSON.",
+  "basePath": "",
+  "tags": [
+    "products",
+    "catalog"
+  ],
+  "defaultHeaders": {
+    "Content-Type": "application/json",
+    "Accept": "application/json"
+  },
+  "endpoints": [
+    {
+      "id": "list-products",
+      "method": "GET",
+      "path": "/products",
+      "name": "List products",
+      "description": "List products with limit and skip pagination.",
+      "module": "products",
+      "query": {
+        "limit": "{{Limit}}",
+        "skip": "{{Skip}}"
+      },
+      "assertions": [
+        "status-ok",
+        "products-array-present"
+      ],
+      "expectedStatusCodes": [
+        200
+      ]
+    },
+    {
+      "id": "get-product",
+      "method": "GET",
+      "path": "/products/{{ProductId}}",
+      "name": "Get product",
+      "description": "Get one product by id.",
+      "module": "products",
+      "assertions": [
+        "status-ok",
+        "product-id-matches"
+      ],
+      "expectedStatusCodes": [
+        200
+      ]
+    },
+    {
+      "id": "search-products",
+      "method": "GET",
+      "path": "/products/search",
+      "name": "Search products",
+      "description": "Search products by text.",
+      "module": "products",
+      "query": {
+        "q": "{{ProductSearch}}"
+      },
+      "assertions": [
+        "status-ok",
+        "products-array-present"
+      ],
+      "expectedStatusCodes": [
+        200
+      ]
+    },
+    {
+      "id": "add-product",
+      "method": "POST",
+      "path": "/products/add",
+      "name": "Add product",
+      "description": "Simulate product creation.",
+      "module": "products",
+      "request": {
+        "mode": "payload",
+        "payload": "product-add"
+      },
+      "payload": "product-add",
+      "assertions": [
+        "status-created-simulated",
+        "product-title-matches"
+      ],
+      "saveVariables": [
+        {
+          "name": "ProductId",
+          "source": "JsonPath",
+          "jsonPath": "$.id",
+          "required": true
+        }
+      ],
+      "expectedStatusCodes": [
+        201
+      ]
+    }
+  ]
+}

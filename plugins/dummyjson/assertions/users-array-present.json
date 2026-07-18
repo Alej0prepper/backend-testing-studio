@@ -1,0 +1,10 @@
+{
+  "id": "users-array-present",
+  "type": "JSONPath",
+  "target": "body",
+  "expected": "NotNull",
+  "description": "User list response must include users.",
+  "severity": "Error",
+  "message": "Expected response $.users to be present.",
+  "jsonPath": "$.users"
+}

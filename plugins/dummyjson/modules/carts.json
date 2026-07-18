@@ -1,0 +1,123 @@
+{
+  "id": "carts",
+  "name": "Carts",
+  "description": "Cart endpoints for DummyJSON commerce workflows.",
+  "basePath": "",
+  "tags": [
+    "carts",
+    "commerce"
+  ],
+  "defaultHeaders": {
+    "Content-Type": "application/json",
+    "Accept": "application/json"
+  },
+  "endpoints": [
+    {
+      "id": "list-carts",
+      "method": "GET",
+      "path": "/carts",
+      "name": "List carts",
+      "description": "List carts.",
+      "module": "carts",
+      "assertions": [
+        "status-ok",
+        "carts-array-present"
+      ],
+      "expectedStatusCodes": [
+        200
+      ]
+    },
+    {
+      "id": "get-cart",
+      "method": "GET",
+      "path": "/carts/{{CartId}}",
+      "name": "Get cart",
+      "description": "Get one cart by id.",
+      "module": "carts",
+      "assertions": [
+        "status-ok",
+        "cart-id-matches"
+      ],
+      "expectedStatusCodes": [
+        200
+      ]
+    },
+    {
+      "id": "get-user-carts",
+      "method": "GET",
+      "path": "/carts/user/{{UserId}}",
+      "name": "Get user carts",
+      "description": "Get carts by user id.",
+      "module": "carts",
+      "assertions": [
+        "status-ok",
+        "carts-array-present"
+      ],
+      "expectedStatusCodes": [
+        200
+      ]
+    },
+    {
+      "id": "add-cart",
+      "method": "POST",
+      "path": "/carts/add",
+      "name": "Add cart",
+      "description": "Simulate cart creation.",
+      "module": "carts",
+      "request": {
+        "mode": "payload",
+        "payload": "cart-add"
+      },
+      "payload": "cart-add",
+      "assertions": [
+        "status-created-simulated",
+        "cart-user-id-matches"
+      ],
+      "saveVariables": [
+        {
+          "name": "CartId",
+          "source": "JsonPath",
+          "jsonPath": "$.id",
+          "required": true
+        }
+      ],
+      "expectedStatusCodes": [
+        201
+      ]
+    },
+    {
+      "id": "update-cart",
+      "method": "PUT",
+      "path": "/carts/{{CartId}}",
+      "name": "Update cart",
+      "description": "Simulate cart update.",
+      "module": "carts",
+      "request": {
+        "mode": "payload",
+        "payload": "cart-update"
+      },
+      "payload": "cart-update",
+      "assertions": [
+        "status-ok"
+      ],
+      "expectedStatusCodes": [
+        200
+      ]
+    },
+    {
+      "id": "delete-cart",
+      "method": "DELETE",
+      "path": "/carts/{{CartId}}",
+      "name": "Delete cart",
+      "description": "Simulate cart deletion.",
+      "module": "carts",
+      "assertions": [
+        "status-ok",
+        "deleted-flag-true"
+      ],
+      "expectedStatusCodes": [
+        200
+      ]
+    }
+  ]
+}

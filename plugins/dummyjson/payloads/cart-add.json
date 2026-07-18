@@ -1,0 +1,19 @@
+{
+  "id": "cart-add",
+  "description": "Simulated cart creation body.",
+  "contentType": "application/json",
+  "variables": [
+    "UserId",
+    "ProductId",
+    "Quantity"
+  ],
+  "content": {
+    "userId": "{{UserId}}",
+    "products": [
+      {
+        "id": "{{ProductId}}",
+        "quantity": "{{Quantity}}"
+      }
+    ]
+  }
+}

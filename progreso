@@ -19,24 +19,26 @@ Fecha de revisión: 2026-07-18
 13. El motor de escenarios ya ejecuta steps HTTP ordenados, comparte variables entre pasos, captura valores de respuestas, evalúa assertions y detiene el flujo según la política de fallo.
 14. El motor de reportes ya genera resumen, pasos, assertions, variables y errores, con exportación a HTML, Markdown y JSON.
 15. El plugin declarativo de Swagger PetStore ya define ambientes, variables, payloads, assertions, endpoints CRUD y escenarios de prueba.
+16. El plugin declarativo de DummyJSON ya define Login, Products, Cart y Users con escenarios completos.
 
 ## Prompt aplicado más reciente
 
-**Prompt 15 - Plugin Swagger PetStore**
+**Prompt 16 - Plugin DummyJSON**
 
-Se creó un plugin declarativo completo para Swagger PetStore con:
+Se creó un segundo plugin declarativo completo para DummyJSON con:
 
 - manifiesto `plugin.json`
-- ambiente live `https://petstore.swagger.io/v2`
-- variable `ApiKey` con el valor de ejemplo `special-key`
-- endpoints `POST /pet`, `GET /pet/{{PetId}}`, `PUT /pet` y `DELETE /pet/{{PetId}}`
-- payloads reutilizables para crear y actualizar mascotas
-- assertions reutilizables para status, id, nombre y estado
-- escenario `create-and-read-pet`
-- escenario `pet-crud-lifecycle`
+- ambiente live `https://dummyjson.com`
+- módulo `auth` con login y usuario autenticado
+- módulo `products` con listado, consulta, búsqueda y creación simulada
+- módulo `carts` con listado, consulta, carritos por usuario, creación, actualización y eliminación simuladas
+- módulo `users` con listado, consulta, búsqueda, creación, actualización y eliminación simuladas
+- payloads reutilizables para login, productos, carritos y usuarios
+- assertions reutilizables para status, tokens, arrays, ids y banderas de eliminación
+- escenarios `login-and-auth-user`, `products-catalog-flow`, `cart-management-flow`, `users-management-flow` y `full-commerce-smoke`
 - pruebas que validan el contrato JSON y sus referencias internas
 
-No se modificó el motor. El plugin queda expresado exclusivamente como archivos declarativos según `PLUGIN_SPEC.md`.
+No se modificó `Core`. El plugin queda expresado exclusivamente como archivos declarativos según `PLUGIN_SPEC.md`.
 
 ## Siguiente paso natural
 

@@ -1,0 +1,126 @@
+{
+  "id": "users",
+  "name": "Users",
+  "description": "User management endpoints for DummyJSON.",
+  "basePath": "",
+  "tags": [
+    "users"
+  ],
+  "defaultHeaders": {
+    "Content-Type": "application/json",
+    "Accept": "application/json"
+  },
+  "endpoints": [
+    {
+      "id": "list-users",
+      "method": "GET",
+      "path": "/users",
+      "name": "List users",
+      "description": "List users.",
+      "module": "users",
+      "assertions": [
+        "status-ok",
+        "users-array-present"
+      ],
+      "expectedStatusCodes": [
+        200
+      ]
+    },
+    {
+      "id": "get-user",
+      "method": "GET",
+      "path": "/users/{{UserId}}",
+      "name": "Get user",
+      "description": "Get one user by id.",
+      "module": "users",
+      "assertions": [
+        "status-ok",
+        "user-id-matches"
+      ],
+      "expectedStatusCodes": [
+        200
+      ]
+    },
+    {
+      "id": "search-users",
+      "method": "GET",
+      "path": "/users/search",
+      "name": "Search users",
+      "description": "Search users by query text.",
+      "module": "users",
+      "query": {
+        "q": "{{Username}}"
+      },
+      "assertions": [
+        "status-ok",
+        "users-array-present"
+      ],
+      "expectedStatusCodes": [
+        200
+      ]
+    },
+    {
+      "id": "add-user",
+      "method": "POST",
+      "path": "/users/add",
+      "name": "Add user",
+      "description": "Simulate user creation.",
+      "module": "users",
+      "request": {
+        "mode": "payload",
+        "payload": "user-add"
+      },
+      "payload": "user-add",
+      "assertions": [
+        "status-created-simulated",
+        "first-name-matches"
+      ],
+      "saveVariables": [
+        {
+          "name": "UserId",
+          "source": "JsonPath",
+          "jsonPath": "$.id",
+          "required": true
+        }
+      ],
+      "expectedStatusCodes": [
+        201
+      ]
+    },
+    {
+      "id": "update-user",
+      "method": "PUT",
+      "path": "/users/{{UserId}}",
+      "name": "Update user",
+      "description": "Simulate user update.",
+      "module": "users",
+      "request": {
+        "mode": "payload",
+        "payload": "user-update"
+      },
+      "payload": "user-update",
+      "assertions": [
+        "status-ok",
+        "first-name-matches"
+      ],
+      "expectedStatusCodes": [
+        200
+      ]
+    },
+    {
+      "id": "delete-user",
+      "method": "DELETE",
+      "path": "/users/{{UserId}}",
+      "name": "Delete user",
+      "description": "Simulate user deletion.",
+      "module": "users",
+      "assertions": [
+        "status-ok",
+        "deleted-flag-true"
+      ],
+      "expectedStatusCodes": [
+        200
+      ]
+    }
+  ]
+}

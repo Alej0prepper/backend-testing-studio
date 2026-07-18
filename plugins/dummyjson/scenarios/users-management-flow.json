@@ -1,0 +1,86 @@
+{
+  "id": "users-management-flow",
+  "name": "Users management flow",
+  "description": "List users, get a user, search users, then simulate add, update and delete.",
+  "tags": [
+    "users"
+  ],
+  "onFailure": "Stop",
+  "steps": [
+    {
+      "execute": "list-users",
+      "assertions": [
+        "status-ok",
+        "users-array-present"
+      ],
+      "enabled": true
+    },
+    {
+      "execute": "get-user",
+      "with": {
+        "UserId": "{{UserId}}"
+      },
+      "assertions": [
+        "status-ok",
+        "user-id-matches"
+      ],
+      "enabled": true
+    },
+    {
+      "execute": "search-users",
+      "with": {
+        "Username": "{{Username}}"
+      },
+      "assertions": [
+        "status-ok",
+        "users-array-present"
+      ],
+      "enabled": true
+    },
+    {
+      "execute": "add-user",
+      "with": {
+        "payload": "user-add"
+      },
+      "saveVariables": [
+        {
+          "name": "UserId",
+          "source": "JsonPath",
+          "jsonPath": "$.id",
+          "required": true
+        }
+      ],
+      "assertions": [
+        "status-created-simulated",
+        "first-name-matches"
+      ],
+      "enabled": true
+    },
+    {
+      "execute": "update-user",
+      "with": {
+        "payload": "user-update",
+        "UserId": "{{UserId}}"
+      },
+      "assertions": [
+        "status-ok",
+        "first-name-matches"
+      ],
+      "enabled": true
+    },
+    {
+      "execute": "delete-user",
+      "with": {
+        "UserId": "{{UserId}}"
+      },
+      "assertions": [
+        "status-ok",
+        "deleted-flag-true"
+      ],
+      "enabled": true
+    }
+  ],
+  "outputs": [
+    "UserId"
+  ]
+}
