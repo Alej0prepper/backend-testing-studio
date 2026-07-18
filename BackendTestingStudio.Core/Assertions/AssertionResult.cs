@@ -1,4 +1,4 @@
-namespace BackendTestingStudio.Assertions.Assertions;
+namespace BackendTestingStudio.Core.Assertions;
 
 public sealed record AssertionResult(
     string Name,

@@ -1,5 +1,6 @@
 using System.Net;
 using BackendTestingStudio.Assertions.Assertions;
+using BackendTestingStudio.Core.Assertions;
 using Xunit;
 
 namespace BackendTestingStudio.Assertions.Tests;

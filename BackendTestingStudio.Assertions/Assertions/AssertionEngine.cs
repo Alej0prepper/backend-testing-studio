@@ -1,4 +1,5 @@
 using System.Text.Json;
+using BackendTestingStudio.Core.Assertions;
 
 namespace BackendTestingStudio.Assertions.Assertions;
 
@@ -71,15 +72,13 @@ public sealed class AssertionEngine : IAssertionEngine
 
         try
         {
-            using var document = JsonDocument.Parse(context.Body);
-            var matches = JsonPathEvaluator.Select(document.RootElement, assertion.Path!);
-            var values = matches.Select(FormatJsonElement).ToArray();
+            var values = JsonPathReader.ReadValues(context.Body, assertion.Path!);
             var actual = JoinValues(values);
 
             return assertion.Operator switch
             {
-                AssertionOperatorKind.Null => BuildResult(assertion, values.Length == 0, actual, $"Expected JSONPath '{assertion.Path}' to be null."),
-                AssertionOperatorKind.NotNull => BuildResult(assertion, values.Length > 0, actual, $"Expected JSONPath '{assertion.Path}' to be not null."),
+                AssertionOperatorKind.Null => BuildResult(assertion, values.Count == 0, actual, $"Expected JSONPath '{assertion.Path}' to be null."),
+                AssertionOperatorKind.NotNull => BuildResult(assertion, values.Count > 0, actual, $"Expected JSONPath '{assertion.Path}' to be not null."),
                 AssertionOperatorKind.Equals => BuildResult(
                     assertion,
                     values.Any(value => string.Equals(value, assertion.ExpectedValue, StringComparison.OrdinalIgnoreCase)),
@@ -153,126 +152,4 @@ public sealed class AssertionEngine : IAssertionEngine
     private static string JoinValues(IEnumerable<string?> values)
         => string.Join(", ", values.Where(value => !string.IsNullOrWhiteSpace(value)).Select(value => value!.Trim()));
 
-    private static string FormatJsonElement(JsonElement element)
-        => element.ValueKind switch
-        {
-            JsonValueKind.String => element.GetString() ?? string.Empty,
-            JsonValueKind.Number => element.GetRawText(),
-            JsonValueKind.True => bool.TrueString,
-            JsonValueKind.False => bool.FalseString,
-            JsonValueKind.Null => "null",
-            JsonValueKind.Object or JsonValueKind.Array => element.GetRawText(),
-            _ => element.ToString()
-        };
-
-    private static class JsonPathEvaluator
-    {
-        public static IReadOnlyList<JsonElement> Select(JsonElement root, string path)
-        {
-            if (string.IsNullOrWhiteSpace(path))
-            {
-                throw new ArgumentException("JSONPath is required.", nameof(path));
-            }
-
-            if (path[0] != '$')
-            {
-                throw new ArgumentException("JSONPath must start with '$'.", nameof(path));
-            }
-
-            var current = new List<JsonElement> { root };
-            var index = 1;
-
-            while (index < path.Length)
-            {
-                switch (path[index])
-                {
-                    case '.':
-                        index++;
-                        var property = ReadIdentifier(path, ref index);
-                        current = current
-                            .SelectMany(element => SelectProperty(element, property))
-                            .ToList();
-                        break;
-                    case '[':
-                        var token = ReadBracketToken(path, ref index);
-                        current = current
-                            .SelectMany(element => SelectBracket(element, token))
-                            .ToList();
-                        break;
-                    default:
-                        throw new ArgumentException($"Unexpected token at position {index} in JSONPath '{path}'.", nameof(path));
-                }
-            }
-
-            return current;
-        }
-
-        private static IEnumerable<JsonElement> SelectProperty(JsonElement element, string property)
-        {
-            if (element.ValueKind != JsonValueKind.Object)
-            {
-                return [];
-            }
-
-            return element.TryGetProperty(property, out var child) ? [child] : [];
-        }
-
-        private static IEnumerable<JsonElement> SelectBracket(JsonElement element, string token)
-        {
-            if (element.ValueKind != JsonValueKind.Array)
-            {
-                return [];
-            }
-
-            if (token == "*")
-            {
-                return element.EnumerateArray().ToArray();
-            }
-
-            if (int.TryParse(token, out var index) && index >= 0 && index < element.GetArrayLength())
-            {
-                return [element[index]];
-            }
-
-            return [];
-        }
-
-        private static string ReadIdentifier(string path, ref int index)
-        {
-            var start = index;
-            while (index < path.Length && IsIdentifierChar(path[index]))
-            {
-                index++;
-            }
-
-            if (index == start)
-            {
-                throw new ArgumentException($"Missing property name in JSONPath '{path}'.", nameof(path));
-            }
-
-            return path[start..index];
-        }
-
-        private static string ReadBracketToken(string path, ref int index)
-        {
-            index++;
-            var start = index;
-            while (index < path.Length && path[index] != ']')
-            {
-                index++;
-            }
-
-            if (index >= path.Length)
-            {
-                throw new ArgumentException($"Unclosed bracket in JSONPath '{path}'.", nameof(path));
-            }
-
-            var token = path[start..index].Trim();
-            index++;
-            return token;
-        }
-
-        private static bool IsIdentifierChar(char value)
-            => char.IsLetterOrDigit(value) || value is '_' or '-';
-    }
 }

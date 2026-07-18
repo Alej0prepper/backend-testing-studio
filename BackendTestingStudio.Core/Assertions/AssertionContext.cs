@@ -1,6 +1,6 @@
 using System.Net;
 
-namespace BackendTestingStudio.Assertions.Assertions;
+namespace BackendTestingStudio.Core.Assertions;
 
 public sealed record AssertionContext(
     HttpStatusCode? StatusCode,

@@ -1,6 +1,6 @@
 # Progreso del proyecto
 
-Fecha de revisión: 2026-07-15
+Fecha de revisión: 2026-07-18
 
 ## Estado actual
 
@@ -16,20 +16,24 @@ Fecha de revisión: 2026-07-15
 10. La biblioteca de payloads reutilizables ya quedó implementada con persistencia SQLite y se puede aplicar desde `API Explorer`.
 11. El motor HTTP ya resuelve variables runtime antes de ejecutar cada request.
 12. El motor de assertions ya quedó implementado como una librería desacoplada con soporte para status, headers, JSONPath y tiempo máximo.
+13. El motor de escenarios ya ejecuta steps HTTP ordenados, comparte variables entre pasos, captura valores de respuestas, evalúa assertions y detiene el flujo según la política de fallo.
 
 ## Prompt aplicado más reciente
 
-**Prompt 12 - Assertions**
+**Prompt 13 - Scenario Engine**
 
-Se implementó un motor de assertions desacoplado con:
+Se implementó un motor de escenarios desacoplado con:
 
-- validación de `StatusCode`
-- soporte de `JSONPath`
-- validación de `Headers`
-- operadores `Equals`, `Contains`, `Null` y `NotNull`
-- validación de `Tiempo máximo`
+- escenarios compuestos por steps ordenados
+- ejecución de requests `GET`, `POST`, `PUT`, `PATCH` y `DELETE` mediante `IHttpEngine`
+- variables iniciales, variables por step y variables capturadas en runtime
+- captura desde `JSONPath`, headers, status code y body
+- assertions por step mediante `IAssertionEngine`
+- resultados estructurados por escenario y por step
+- detención del flujo con `StopOnFailure`
+- soporte para continuar tras un fallo cuando la política del step lo permite
 
-El motor no depende de ninguna API concreta; recibe un contexto de respuesta y devuelve resultados de assertion listos para consumir por cualquier capa superior.
+El motor no depende de APIs concretas ni de implementaciones de infraestructura. Los contratos de assertions y escenarios viven en `Core`; las implementaciones se consumen mediante interfaces.
 
 ## Siguiente paso natural
 

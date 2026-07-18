@@ -1,4 +1,4 @@
-namespace BackendTestingStudio.Assertions.Assertions;
+namespace BackendTestingStudio.Core.Assertions;
 
 public sealed record AssertionDefinition
 {
@@ -67,12 +67,9 @@ public sealed record AssertionDefinition
             throw new ArgumentException("Path is required for Header and JsonPath assertions.", nameof(Path));
         }
 
-        if (Operator is AssertionOperatorKind.Equals or AssertionOperatorKind.Contains)
+        if ((Operator is AssertionOperatorKind.Equals or AssertionOperatorKind.Contains) && ExpectedValue is null)
         {
-            if (ExpectedValue is null)
-            {
-                throw new ArgumentException("ExpectedValue is required for Equals and Contains assertions.", nameof(ExpectedValue));
-            }
+            throw new ArgumentException("ExpectedValue is required for Equals and Contains assertions.", nameof(ExpectedValue));
         }
     }
 }
