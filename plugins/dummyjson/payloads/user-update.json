@@ -1,0 +1,13 @@
+{
+  "id": "user-update",
+  "description": "Simulated user update body.",
+  "contentType": "application/json",
+  "variables": [
+    "FirstName",
+    "LastName"
+  ],
+  "content": {
+    "firstName": "{{FirstName}}",
+    "lastName": "{{LastName}}"
+  }
+}

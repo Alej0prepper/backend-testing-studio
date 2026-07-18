@@ -1,0 +1,78 @@
+.module-status {
+    display: grid;
+    gap: 14px;
+}
+
+.status-hero {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 28px;
+    min-height: 260px;
+    padding: 36px;
+}
+
+.status-code {
+    color: rgba(255, 184, 77, 0.18);
+    font-family: "Bahnschrift", sans-serif;
+    font-size: clamp(4rem, 10vw, 8rem);
+    font-weight: 900;
+    letter-spacing: -0.08em;
+}
+
+.status-hero h2 {
+    margin: 0;
+    font-family: "Bahnschrift", sans-serif;
+    font-size: clamp(2.4rem, 5vw, 4.5rem);
+    letter-spacing: -0.05em;
+}
+
+.status-hero p {
+    max-width: 600px;
+    margin: 12px 0 0;
+    color: var(--muted);
+    line-height: 1.6;
+}
+
+.planned-badge {
+    padding: 7px 9px;
+    border: 1px solid rgba(255, 184, 77, 0.3);
+    border-radius: 6px;
+    color: var(--signal);
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    text-transform: uppercase;
+}
+
+.status-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.next-panel {
+    display: flex;
+    flex-direction: column;
+}
+
+.module-actions {
+    display: flex;
+    gap: 9px;
+    margin-top: auto;
+    padding-top: 24px;
+}
+
+@media (max-width: 800px) {
+    .status-hero,
+    .status-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .status-code {
+        font-size: 4rem;
+    }
+
+    .planned-badge {
+        justify-self: start;
+    }
+}

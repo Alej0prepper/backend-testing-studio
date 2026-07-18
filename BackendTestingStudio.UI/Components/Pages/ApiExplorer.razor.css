@@ -1,0 +1,63 @@
+.api-explorer {
+    display: grid;
+    gap: 14px;
+}
+
+.workspace-grid {
+    grid-template-columns: minmax(0, 1.25fr) minmax(340px, 0.75fr);
+}
+
+.request-panel,
+.response-panel {
+    display: grid;
+    gap: 16px;
+}
+
+.response-panel {
+    position: sticky;
+    top: 120px;
+}
+
+.body-selector {
+    width: auto;
+    min-width: 160px;
+}
+
+.helper-text {
+    color: var(--muted);
+    font-size: 0.72rem;
+}
+
+.section-header.compact {
+    align-items: center;
+}
+
+.response-summary {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.response-panel .response-body {
+    min-height: 300px;
+}
+
+@media (max-width: 1100px) {
+    .workspace-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .response-panel {
+        position: static;
+    }
+}
+
+@media (max-width: 650px) {
+    .response-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .body-selector {
+        width: 100%;
+    }
+}

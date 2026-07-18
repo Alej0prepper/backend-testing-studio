@@ -1,0 +1,72 @@
+{
+  "id": "products-catalog-flow",
+  "name": "Products catalog flow",
+  "description": "List products, fetch a product, search products, and simulate product creation.",
+  "tags": [
+    "products",
+    "catalog"
+  ],
+  "onFailure": "Stop",
+  "variables": {
+    "Limit": "10",
+    "Skip": "0"
+  },
+  "steps": [
+    {
+      "execute": "list-products",
+      "with": {
+        "Limit": "10",
+        "Skip": "0"
+      },
+      "assertions": [
+        "status-ok",
+        "products-array-present"
+      ],
+      "enabled": true
+    },
+    {
+      "execute": "get-product",
+      "with": {
+        "ProductId": "{{ProductId}}"
+      },
+      "assertions": [
+        "status-ok",
+        "product-id-matches"
+      ],
+      "enabled": true
+    },
+    {
+      "execute": "search-products",
+      "with": {
+        "ProductSearch": "{{ProductSearch}}"
+      },
+      "assertions": [
+        "status-ok",
+        "products-array-present"
+      ],
+      "enabled": true
+    },
+    {
+      "execute": "add-product",
+      "with": {
+        "payload": "product-add"
+      },
+      "saveVariables": [
+        {
+          "name": "ProductId",
+          "source": "JsonPath",
+          "jsonPath": "$.id",
+          "required": true
+        }
+      ],
+      "assertions": [
+        "status-created-simulated",
+        "product-title-matches"
+      ],
+      "enabled": true
+    }
+  ],
+  "outputs": [
+    "ProductId"
+  ]
+}

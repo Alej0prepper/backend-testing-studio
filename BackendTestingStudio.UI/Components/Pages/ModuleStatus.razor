@@ -1,0 +1,67 @@
+@page "/scenarios"
+@page "/reports"
+@page "/settings"
+@inject NavigationManager Navigation
+
+<PageTitle>@ModuleName · Backend Testing Studio</PageTitle>
+
+<section class="module-status">
+    <article class="status-hero card">
+        <div class="status-code">@ModuleCode</div>
+        <div>
+            <span class="eyebrow">Modulo planificado</span>
+            <h2>@ModuleName</h2>
+            <p>@Description</p>
+        </div>
+        <span class="planned-badge">Aun no implementado</span>
+    </article>
+
+    <div class="status-grid">
+        <article class="card panel">
+            <span class="eyebrow">Estado honesto</span>
+            <h3>Por que ves esta pantalla</h3>
+            <p>
+                La navegacion base exige que este modulo sea visible, pero ninguno de los primeros
+                12 prompts solicita su implementacion funcional. Esta ruta evita un 404 sin simular
+                una capacidad que todavia no existe.
+            </p>
+        </article>
+
+        <article class="card panel next-panel">
+            <span class="eyebrow">Disponible ahora</span>
+            <h3>Continua con un flujo operativo</h3>
+            <div class="module-actions">
+                <NavLink href="/api-explorer" class="primary-button">Abrir API Explorer</NavLink>
+                <NavLink href="/" class="ghost-button">Volver al dashboard</NavLink>
+            </div>
+        </article>
+    </div>
+</section>
+
+@code {
+    private string Path => Navigation.ToBaseRelativePath(Navigation.Uri).Trim('/');
+
+    private string ModuleName => Path switch
+    {
+        "scenarios" => "Scenarios",
+        "reports" => "Reports",
+        "settings" => "Settings",
+        _ => "Modulo"
+    };
+
+    private string ModuleCode => Path switch
+    {
+        "scenarios" => "SCN",
+        "reports" => "RPT",
+        "settings" => "CFG",
+        _ => "---"
+    };
+
+    private string Description => Path switch
+    {
+        "scenarios" => "Orquestara secuencias de requests, variables entre pasos y assertions.",
+        "reports" => "Consolidara resultados, tiempos y fallos de las ejecuciones.",
+        "settings" => "Centralizara preferencias globales del workspace y del motor.",
+        _ => "Capacidad prevista para una iteracion posterior."
+    };
+}

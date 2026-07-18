@@ -1,0 +1,15 @@
+{
+  "id": "user-add",
+  "description": "Simulated user creation body.",
+  "contentType": "application/json",
+  "variables": [
+    "FirstName",
+    "LastName",
+    "Username"
+  ],
+  "content": {
+    "firstName": "{{FirstName}}",
+    "lastName": "{{LastName}}",
+    "username": "{{Username}}"
+  }
+}

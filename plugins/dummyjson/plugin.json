@@ -1,0 +1,25 @@
+{
+  "id": "dummyjson",
+  "name": "DummyJSON",
+  "version": "1.0.0",
+  "schemaVersion": "1.0.0",
+  "engineVersion": "0.16.0",
+  "author": "Backend Testing Studio",
+  "description": "Declarative plugin for DummyJSON auth, products, carts and users workflows.",
+  "defaultEnvironment": "dummyjson-live",
+  "modules": [
+    "auth",
+    "products",
+    "carts",
+    "users"
+  ],
+  "tags": [
+    "sample",
+    "dummyjson",
+    "auth",
+    "commerce",
+    "users"
+  ],
+  "repositoryUrl": "https://dummyjson.com",
+  "supportUrl": "https://dummyjson.com/docs"
+}

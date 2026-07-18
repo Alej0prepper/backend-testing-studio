@@ -1,0 +1,42 @@
+{
+  "id": "pet-update",
+  "description": "JSON body for updating a Swagger PetStore pet.",
+  "contentType": "application/json",
+  "variables": [
+    "PetId",
+    "UpdatedPetName",
+    "UpdatedPetStatus"
+  ],
+  "content": {
+    "id": "{{PetId}}",
+    "category": {
+      "id": 1,
+      "name": "dogs"
+    },
+    "name": "{{UpdatedPetName}}",
+    "photoUrls": [
+      "https://example.com/backend-testing-studio/pet-updated.png"
+    ],
+    "tags": [
+      {
+        "id": 1,
+        "name": "backend-testing-studio"
+      },
+      {
+        "id": 2,
+        "name": "updated"
+      }
+    ],
+    "status": "{{UpdatedPetStatus}}"
+  },
+  "examples": [
+    {
+      "name": "Updated PetStore pet",
+      "variables": {
+        "PetId": "987654321",
+        "UpdatedPetName": "BTS Dog Updated",
+        "UpdatedPetStatus": "sold"
+      }
+    }
+  ]
+}

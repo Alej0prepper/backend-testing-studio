@@ -1,0 +1,15 @@
+{
+  "id": "login-request",
+  "description": "DummyJSON login request body.",
+  "contentType": "application/json",
+  "variables": [
+    "Username",
+    "Password",
+    "ExpiresInMins"
+  ],
+  "content": {
+    "username": "{{Username}}",
+    "password": "{{Password}}",
+    "expiresInMins": "{{ExpiresInMins}}"
+  }
+}

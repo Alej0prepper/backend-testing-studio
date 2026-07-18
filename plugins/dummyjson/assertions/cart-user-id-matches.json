@@ -1,0 +1,10 @@
+{
+  "id": "cart-user-id-matches",
+  "type": "JSONPath",
+  "target": "body",
+  "expected": "{{UserId}}",
+  "description": "The response cart user id must match UserId.",
+  "severity": "Error",
+  "message": "Expected response $.userId to match {{UserId}}.",
+  "jsonPath": "$.userId"
+}

@@ -1,0 +1,27 @@
+{
+  "id": "dummyjson-live",
+  "name": "DummyJSON Live",
+  "baseUrl": "https://dummyjson.com",
+  "authentication": {
+    "type": "Bearer",
+    "token": "{{AccessToken}}",
+    "required": false
+  },
+  "headers": {
+    "Accept": "application/json"
+  },
+  "timeout": {
+    "milliseconds": 30000
+  },
+  "variables": {
+    "Username": "emilys",
+    "Password": "emilyspass",
+    "ExpiresInMins": "30",
+    "UserId": "1",
+    "ProductId": "1",
+    "CartId": "1",
+    "Quantity": "2",
+    "ProductSearch": "phone"
+  },
+  "notes": "Public fake REST API. Mutating operations are simulated by DummyJSON and do not persist."
+}

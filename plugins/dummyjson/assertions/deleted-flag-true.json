@@ -1,0 +1,10 @@
+{
+  "id": "deleted-flag-true",
+  "type": "JSONPath",
+  "target": "body",
+  "expected": "true",
+  "description": "Simulated delete response must include isDeleted true.",
+  "severity": "Error",
+  "message": "Expected response $.isDeleted to be true.",
+  "jsonPath": "$.isDeleted"
+}

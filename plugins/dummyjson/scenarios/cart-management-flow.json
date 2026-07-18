@@ -1,0 +1,86 @@
+{
+  "id": "cart-management-flow",
+  "name": "Cart management flow",
+  "description": "List carts, get a cart, get user carts, then simulate add, update and delete.",
+  "tags": [
+    "carts",
+    "commerce"
+  ],
+  "onFailure": "Stop",
+  "steps": [
+    {
+      "execute": "list-carts",
+      "assertions": [
+        "status-ok",
+        "carts-array-present"
+      ],
+      "enabled": true
+    },
+    {
+      "execute": "get-cart",
+      "with": {
+        "CartId": "{{CartId}}"
+      },
+      "assertions": [
+        "status-ok",
+        "cart-id-matches"
+      ],
+      "enabled": true
+    },
+    {
+      "execute": "get-user-carts",
+      "with": {
+        "UserId": "{{UserId}}"
+      },
+      "assertions": [
+        "status-ok",
+        "carts-array-present"
+      ],
+      "enabled": true
+    },
+    {
+      "execute": "add-cart",
+      "with": {
+        "payload": "cart-add"
+      },
+      "saveVariables": [
+        {
+          "name": "CartId",
+          "source": "JsonPath",
+          "jsonPath": "$.id",
+          "required": true
+        }
+      ],
+      "assertions": [
+        "status-created-simulated",
+        "cart-user-id-matches"
+      ],
+      "enabled": true
+    },
+    {
+      "execute": "update-cart",
+      "with": {
+        "payload": "cart-update",
+        "CartId": "{{CartId}}"
+      },
+      "assertions": [
+        "status-ok"
+      ],
+      "enabled": true
+    },
+    {
+      "execute": "delete-cart",
+      "with": {
+        "CartId": "{{CartId}}"
+      },
+      "assertions": [
+        "status-ok",
+        "deleted-flag-true"
+      ],
+      "enabled": true
+    }
+  ],
+  "outputs": [
+    "CartId"
+  ]
+}

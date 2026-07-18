@@ -1,0 +1,130 @@
+{
+  "id": "pet",
+  "name": "Pet",
+  "description": "CRUD operations for Swagger PetStore pets.",
+  "basePath": "",
+  "tags": [
+    "pet",
+    "crud"
+  ],
+  "defaultHeaders": {
+    "Content-Type": "application/json",
+    "Accept": "application/json"
+  },
+  "authentication": "swagger-petstore-live",
+  "endpoints": [
+    {
+      "id": "create-pet",
+      "method": "POST",
+      "path": "/pet",
+      "name": "Create pet",
+      "description": "Create a new pet using a reusable JSON payload.",
+      "module": "pet",
+      "tags": [
+        "create"
+      ],
+      "request": {
+        "mode": "payload",
+        "payload": "pet-create"
+      },
+      "payload": "pet-create",
+      "assertions": [
+        "status-ok",
+        "pet-id-matches",
+        "pet-name-matches"
+      ],
+      "saveVariables": [
+        {
+          "name": "PetId",
+          "source": "JsonPath",
+          "jsonPath": "$.id",
+          "required": true
+        }
+      ],
+      "expectedStatusCodes": [
+        200
+      ]
+    },
+    {
+      "id": "get-pet",
+      "method": "GET",
+      "path": "/pet/{{PetId}}",
+      "name": "Get pet",
+      "description": "Return a pet by id.",
+      "module": "pet",
+      "tags": [
+        "read"
+      ],
+      "form": [
+        {
+          "name": "PetId",
+          "label": "Pet ID",
+          "type": "Number",
+          "required": true,
+          "defaultValue": "{{PetId}}"
+        }
+      ],
+      "assertions": [
+        "status-ok",
+        "pet-id-matches"
+      ],
+      "expectedStatusCodes": [
+        200
+      ]
+    },
+    {
+      "id": "update-pet",
+      "method": "PUT",
+      "path": "/pet",
+      "name": "Update pet",
+      "description": "Update an existing pet with a reusable JSON payload.",
+      "module": "pet",
+      "tags": [
+        "update"
+      ],
+      "request": {
+        "mode": "payload",
+        "payload": "pet-update"
+      },
+      "payload": "pet-update",
+      "assertions": [
+        "status-ok",
+        "pet-id-matches",
+        "pet-updated-name-matches",
+        "pet-updated-status-matches"
+      ],
+      "expectedStatusCodes": [
+        200
+      ]
+    },
+    {
+      "id": "delete-pet",
+      "method": "DELETE",
+      "path": "/pet/{{PetId}}",
+      "name": "Delete pet",
+      "description": "Delete a pet by id using the PetStore api_key header.",
+      "module": "pet",
+      "tags": [
+        "delete"
+      ],
+      "headers": {
+        "api_key": "{{ApiKey}}"
+      },
+      "form": [
+        {
+          "name": "PetId",
+          "label": "Pet ID",
+          "type": "Number",
+          "required": true,
+          "defaultValue": "{{PetId}}"
+        }
+      ],
+      "assertions": [
+        "status-ok"
+      ],
+      "expectedStatusCodes": [
+        200
+      ]
+    }
+  ]
+}

@@ -1,0 +1,323 @@
+@page "/payloads"
+@using BackendTestingStudio.Core.Payloads
+@inject IPayloadService PayloadService
+
+<PageTitle>Payloads</PageTitle>
+
+<section class="payloads-page">
+    <header class="hero card">
+        <div>
+            <span class="eyebrow">Reusable bodies</span>
+            <h2>Payload Library</h2>
+            <p>
+                Define JSON reutilizable con variables y tags. Después puedes aplicarlo desde API Explorer
+                sin copiar y pegar manualmente.
+            </p>
+        </div>
+
+        <div class="hero-metrics">
+            <div class="metric">
+                <span class="metric-label">Saved</span>
+                <strong>@_payloads.Count</strong>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Mode</span>
+                <strong>SQLite</strong>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Editor</span>
+                <strong>@(_editor.Id == Guid.Empty ? "New" : "Editing")</strong>
+            </div>
+        </div>
+    </header>
+
+    <div class="workspace-grid">
+        <section class="card panel editor-panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Editor</span>
+                    <h3>@(_editor.Id == Guid.Empty ? "New payload" : "Edit payload")</h3>
+                </div>
+                <button type="button" class="ghost-button" @onclick="ResetEditor">Reset</button>
+            </div>
+
+            <div class="form-grid">
+                <label class="field">
+                    <span>Name</span>
+                    <input @bind="_editor.Name" />
+                </label>
+
+                <label class="field">
+                    <span>Description</span>
+                    <input @bind="_editor.Description" />
+                </label>
+            </div>
+
+            <div class="section-block">
+                <div class="section-header">
+                    <h4>JSON</h4>
+                </div>
+                <label class="field">
+                    <span>Template</span>
+                    <textarea rows="10" @bind="_editor.Json"></textarea>
+                </label>
+            </div>
+
+            <div class="section-block">
+                <div class="section-header">
+                    <h4>Variables</h4>
+                    <button type="button" class="ghost-button" @onclick="AddVariable">Add variable</button>
+                </div>
+
+                @foreach (var variable in _editor.Variables)
+                {
+                    <div class="row-item payload-row">
+                        <input placeholder="Name" @bind="variable.Name" />
+                        <input placeholder="Value" @bind="variable.Value" />
+                        <button type="button" class="icon-button danger" @onclick="() => RemoveVariable(variable)">×</button>
+                    </div>
+                }
+            </div>
+
+            <div class="section-block">
+                <div class="section-header">
+                    <h4>Tags</h4>
+                    <button type="button" class="ghost-button" @onclick="AddTag">Add tag</button>
+                </div>
+
+                @foreach (var tag in _editor.Tags)
+                {
+                    <div class="row-item tag-row">
+                        <input placeholder="Tag" @bind="tag.Value" />
+                        <div></div>
+                        <button type="button" class="icon-button danger" @onclick="() => RemoveTag(tag)">×</button>
+                    </div>
+                }
+            </div>
+
+            <div class="actions">
+                <button type="button" class="primary-button" @onclick="SaveAsync">Save payload</button>
+                @if (_editor.Id != Guid.Empty)
+                {
+                    <button type="button" class="ghost-button danger-text" @onclick="DeleteEditingAsync">Delete selected</button>
+                }
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(_statusMessage))
+            {
+                <div class="status-banner">@_statusMessage</div>
+            }
+        </section>
+
+        <section class="card panel list-panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Library</span>
+                    <h3>Saved payloads</h3>
+                </div>
+                <span class="count-pill">@_payloads.Count items</span>
+            </div>
+
+            <div class="payload-list">
+                @foreach (var payload in _payloads)
+                {
+                    <article class="payload-item">
+                        <div>
+                            <h4>@payload.Name</h4>
+                            <p>@payload.Description</p>
+                            <div class="meta">
+                                <span>@payload.Variables.Count variables</span>
+                                <span>@payload.Tags.Count tags</span>
+                            </div>
+                        </div>
+                        <div class="item-actions">
+                            <button type="button" class="ghost-button" @onclick="() => EditAsync(payload.Id)">Edit</button>
+                            <button type="button" class="ghost-button danger-text" @onclick="() => DeleteAsync(payload.Id)">Delete</button>
+                        </div>
+                    </article>
+                }
+            </div>
+        </section>
+    </div>
+</section>
+
+@code {
+    private readonly PayloadEditorModel _editor = new();
+    private IReadOnlyList<PayloadDefinition> _payloads = [];
+    private string? _statusMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ReloadAsync();
+        ResetEditor();
+    }
+
+    private async Task ReloadAsync()
+    {
+        _payloads = await PayloadService.GetAllAsync();
+    }
+
+    private void ResetEditor()
+    {
+        _editor.Clear();
+        _statusMessage = null;
+    }
+
+    private void AddVariable() => _editor.Variables.Add(new EditorVariable());
+
+    private void RemoveVariable(EditorVariable variable) => _editor.Variables.Remove(variable);
+
+    private void AddTag() => _editor.Tags.Add(new EditorTag());
+
+    private void RemoveTag(EditorTag tag) => _editor.Tags.Remove(tag);
+
+    private async Task SaveAsync()
+    {
+        var payload = _editor.ToPayload();
+        var saved = payload.Id == Guid.Empty
+            ? await PayloadService.CreateAsync(payload)
+            : await PayloadService.UpdateAsync(payload);
+
+        _statusMessage = $"Saved '{saved.Name}'.";
+        await ReloadAsync();
+        _editor.Load(saved);
+    }
+
+    private async Task EditAsync(Guid id)
+    {
+        var payload = await PayloadService.GetByIdAsync(id);
+        if (payload is null)
+        {
+            _statusMessage = "Payload not found.";
+            return;
+        }
+
+        _editor.Load(payload);
+        _statusMessage = $"Editing '{payload.Name}'.";
+    }
+
+    private async Task DeleteAsync(Guid id)
+    {
+        await PayloadService.DeleteAsync(id);
+        await ReloadAsync();
+
+        if (_editor.Id == id)
+        {
+            ResetEditor();
+        }
+
+        _statusMessage = "Payload deleted.";
+    }
+
+    private async Task DeleteEditingAsync()
+    {
+        if (_editor.Id == Guid.Empty)
+        {
+            return;
+        }
+
+        await DeleteAsync(_editor.Id);
+    }
+
+    private sealed class PayloadEditorModel
+    {
+        public Guid Id { get; private set; }
+
+        public string Name { get; set; } = string.Empty;
+
+        public string Description { get; set; } = string.Empty;
+
+        public string Json { get; set; } = string.Empty;
+
+        public List<EditorVariable> Variables { get; } = [];
+
+        public List<EditorTag> Tags { get; } = [];
+
+        public void Clear()
+        {
+            Id = Guid.Empty;
+            Name = string.Empty;
+            Description = string.Empty;
+            Json = string.Empty;
+            Variables.Clear();
+            Tags.Clear();
+            Variables.Add(new EditorVariable());
+            Tags.Add(new EditorTag());
+        }
+
+        public void Load(PayloadDefinition payload)
+        {
+            Id = payload.Id;
+            Name = payload.Name;
+            Description = payload.Description;
+            Json = payload.Json;
+            Variables.Clear();
+            Tags.Clear();
+
+            Variables.AddRange(payload.Variables.Select(item => new EditorVariable(item.Id, item.Name, item.Value ?? string.Empty)));
+            Tags.AddRange(payload.Tags.Select(item => new EditorTag(item)));
+
+            if (Variables.Count == 0)
+            {
+                Variables.Add(new EditorVariable());
+            }
+
+            if (Tags.Count == 0)
+            {
+                Tags.Add(new EditorTag());
+            }
+        }
+
+        public PayloadDefinition ToPayload()
+            => new(
+                Id,
+                Name,
+                Description,
+                Json,
+                Variables
+                    .Where(item => !item.IsEmpty)
+                    .Select(item => new PayloadVariable(item.Id, item.Name, item.Value))
+                    .ToArray(),
+                Tags
+                    .Select(item => item.Value)
+                    .Where(item => !string.IsNullOrWhiteSpace(item))
+                    .Select(item => item.Trim())
+                    .ToArray());
+    }
+
+    private sealed class EditorVariable
+    {
+        public EditorVariable()
+        {
+        }
+
+        public EditorVariable(Guid id, string name, string value)
+        {
+            Id = id;
+            Name = name;
+            Value = value;
+        }
+
+        public Guid Id { get; init; } = Guid.Empty;
+
+        public string Name { get; set; } = string.Empty;
+
+        public string Value { get; set; } = string.Empty;
+
+        public bool IsEmpty => string.IsNullOrWhiteSpace(Name) && string.IsNullOrWhiteSpace(Value);
+    }
+
+    private sealed class EditorTag
+    {
+        public EditorTag()
+        {
+        }
+
+        public EditorTag(string value)
+        {
+            Value = value;
+        }
+
+        public string Value { get; set; } = string.Empty;
+    }
+}

@@ -1,0 +1,10 @@
+{
+  "id": "products-array-present",
+  "type": "JSONPath",
+  "target": "body",
+  "expected": "NotNull",
+  "description": "Product list response must include products.",
+  "severity": "Error",
+  "message": "Expected response $.products to be present.",
+  "jsonPath": "$.products"
+}

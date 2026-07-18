@@ -1,0 +1,10 @@
+{
+  "id": "access-token-present",
+  "type": "JSONPath",
+  "target": "body",
+  "expected": "NotNull",
+  "description": "Login response must include an access token.",
+  "severity": "Error",
+  "message": "Expected response $.accessToken to be present.",
+  "jsonPath": "$.accessToken"
+}

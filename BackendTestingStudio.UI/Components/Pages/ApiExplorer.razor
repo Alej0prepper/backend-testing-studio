@@ -1,0 +1,632 @@
+﻿@page "/api-explorer"
+@using System.Diagnostics
+@using System.Net
+@using EnvironmentEntity = BackendTestingStudio.Core.Environments.Environment
+@using EnvironmentVariableEntity = BackendTestingStudio.Core.Environments.EnvironmentVariable
+@using BackendTestingStudio.Core.Environments
+@using BackendTestingStudio.Core.History
+@using BackendTestingStudio.Core.Payloads
+@using IEnvironmentService = BackendTestingStudio.Core.Environments.IEnvironmentService
+@using BackendTestingStudio.Core.Http
+@inject IEnvironmentService EnvironmentService
+@inject IHttpEngine HttpEngine
+@inject IRequestHistoryService HistoryService
+@inject IPayloadService PayloadService
+
+<PageTitle>API Explorer</PageTitle>
+
+<section class="api-explorer">
+    <header class="hero card">
+        <div>
+            <span class="eyebrow">Request builder</span>
+            <h2>API Explorer</h2>
+            <p>
+                Construye requests HTTP, selecciona un ambiente y envía la petición usando `IHttpEngine` sin acceder a `HttpClient`.
+            </p>
+        </div>
+
+        <div class="hero-metrics">
+            <div class="metric">
+                <span class="metric-label">Environments</span>
+                <strong>@_environments.Count</strong>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Method</span>
+                <strong>@_request.Method</strong>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Time</span>
+                <strong>@(_response.ElapsedMs is null ? "—" : $"{_response.ElapsedMs:0.##} ms")</strong>
+            </div>
+        </div>
+    </header>
+
+    <div class="workspace-grid">
+        <section class="card panel request-panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Request</span>
+                    <h3>Compose request</h3>
+                </div>
+                <span class="count-pill">@_request.Method request</span>
+            </div>
+
+            <div class="form-grid three-cols">
+                <label class="field">
+                    <span>Environment</span>
+                    <select @bind="_request.SelectedEnvironmentId">
+                        <option value="@string.Empty">None</option>
+                        @foreach (var environment in _environments)
+                        {
+                            <option value="@environment.Id.ToString()">@environment.Name</option>
+                        }
+                    </select>
+                </label>
+
+                <label class="field">
+                    <span>Method</span>
+                    <select @bind="_request.Method">
+                        @foreach (var method in Enum.GetValues<ExplorerMethod>())
+                        {
+                            <option value="@method">@method</option>
+                        }
+                    </select>
+                </label>
+
+                <label class="field">
+                    <span>URL</span>
+                    <input placeholder="/v1/items or https://api.example.test/v1/items" @bind="_request.Url" />
+                </label>
+            </div>
+
+            <div class="section-block">
+                <div class="section-header">
+                    <h4>Headers</h4>
+                    <button type="button" class="ghost-button" @onclick="AddHeader">Add header</button>
+                </div>
+
+                @foreach (var header in _request.Headers)
+                {
+                    <div class="row-item">
+                        <input placeholder="Name" @bind="header.Name" />
+                        <input placeholder="Value" @bind="header.Value" />
+                        <button type="button" class="icon-button danger" @onclick="() => RemoveHeader(header)">×</button>
+                    </div>
+                }
+            </div>
+
+            <div class="section-block">
+                <div class="section-header">
+                    <h4>Query Parameters</h4>
+                    <button type="button" class="ghost-button" @onclick="AddQueryParam">Add parameter</button>
+                </div>
+
+                @foreach (var param in _request.QueryParameters)
+                {
+                    <div class="row-item">
+                        <input placeholder="Name" @bind="param.Name" />
+                        <input placeholder="Value" @bind="param.Value" />
+                        <button type="button" class="icon-button danger" @onclick="() => RemoveQueryParam(param)">×</button>
+                    </div>
+                }
+            </div>
+
+            <div class="section-block">
+                <div class="section-header">
+                    <h4>Body</h4>
+                    <select class="body-selector" @bind="_request.BodyMode">
+                        @foreach (var mode in Enum.GetValues<ExplorerBodyMode>())
+                        {
+                            <option value="@mode">@mode</option>
+                        }
+                    </select>
+                </div>
+
+                @if (_request.BodyMode == ExplorerBodyMode.Json)
+                {
+                    <label class="field">
+                        <span>JSON</span>
+                        <textarea rows="8" @bind="_request.JsonBody"></textarea>
+                    </label>
+                }
+                else if (_request.BodyMode == ExplorerBodyMode.Multipart)
+                {
+                    <div class="section-header compact">
+                        <span class="helper-text">Multipart parts are sent as form-data.</span>
+                        <button type="button" class="ghost-button" @onclick="AddMultipartPart">Add part</button>
+                    </div>
+
+                    @foreach (var part in _request.MultipartParts)
+                    {
+                        <div class="multipart-grid">
+                            <input placeholder="Name" @bind="part.Name" />
+                            <input placeholder="Value" @bind="part.Value" />
+                            <input placeholder="File name" @bind="part.FileName" />
+                            <input placeholder="Content type" @bind="part.ContentType" />
+                            <button type="button" class="icon-button danger" @onclick="() => RemoveMultipartPart(part)">×</button>
+                        </div>
+                    }
+                }
+            </div>
+
+            <div class="section-block">
+                <div class="section-header">
+                    <div>
+                        <h4>Payload library</h4>
+                        <span class="helper-text">Aplica un payload guardado al body JSON actual.</span>
+                    </div>
+                    <button type="button"
+                            class="ghost-button"
+                            @onclick="ApplySelectedPayloadAsync"
+                            disabled="@(!_payloads.Any() || string.IsNullOrWhiteSpace(_request.SelectedPayloadId))">
+                        Apply payload
+                    </button>
+                </div>
+
+                <div class="form-grid two-cols">
+                    <label class="field">
+                        <span>Saved payload</span>
+                        <select @bind="_request.SelectedPayloadId">
+                            <option value="@string.Empty">Select a payload</option>
+                            @foreach (var payload in _payloads)
+                            {
+                                <option value="@payload.Id.ToString()">@payload.Name</option>
+                            }
+                        </select>
+                    </label>
+
+                    <label class="field">
+                        <span>Preview</span>
+                        <input value="@GetSelectedPayloadPreview()" readonly />
+                    </label>
+                </div>
+            </div>
+
+            <div class="actions">
+                <button type="button" class="primary-button" @onclick="SendAsync" disabled="@_isSending">
+                    @(_isSending ? "Sending..." : "Send request")
+                </button>
+                <button type="button" class="ghost-button" @onclick="ResetRequest">Reset</button>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(_errorMessage))
+            {
+                <div class="status-banner danger-banner">@_errorMessage</div>
+            }
+        </section>
+
+        <section class="card panel response-panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Response</span>
+                    <h3>Result</h3>
+                </div>
+                <span class="count-pill">@(_response.StatusCode is null ? "Idle" : _response.StatusCode.ToString())</span>
+            </div>
+
+            <div class="response-summary">
+                <article class="summary-card">
+                    <span class="metric-label">Status</span>
+                    <strong>@(_response.StatusCode is null ? "—" : $"{(int)_response.StatusCode} {_response.StatusCode}")</strong>
+                </article>
+                <article class="summary-card">
+                    <span class="metric-label">Time</span>
+                    <strong>@(_response.ElapsedMs is null ? "—" : $"{_response.ElapsedMs:0.##} ms")</strong>
+                </article>
+            </div>
+
+            <div class="section-block">
+                <div class="section-header">
+                    <h4>Headers</h4>
+                </div>
+
+                @if (_response.Headers.Count == 0)
+                {
+                    <div class="empty-state">No response headers yet.</div>
+                }
+                else
+                {
+                    <div class="header-list">
+                        @foreach (var header in _response.Headers)
+                        {
+                            <div class="header-row">
+                                <strong>@header.Key</strong>
+                                <span>@header.Value</span>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+
+            <div class="section-block">
+                <div class="section-header">
+                    <h4>Body</h4>
+                </div>
+
+                <pre class="response-body">@(_response.Body ?? "No response body yet.")</pre>
+            </div>
+        </section>
+    </div>
+</section>
+
+@code {
+    private readonly ExplorerRequestModel _request = new();
+    private readonly ExplorerResponseModel _response = new();
+    private IReadOnlyList<EnvironmentEntity> _environments = [];
+    private IReadOnlyList<PayloadDefinition> _payloads = [];
+    private bool _isSending;
+    private string? _errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ReloadEnvironmentsAsync();
+        await ReloadPayloadsAsync();
+        ResetRequest();
+    }
+
+    private async Task ReloadEnvironmentsAsync()
+    {
+        _environments = await EnvironmentService.GetAllAsync();
+        if (string.IsNullOrWhiteSpace(_request.SelectedEnvironmentId) && _environments.Count > 0)
+        {
+            _request.SelectedEnvironmentId = _environments[0].Id.ToString();
+        }
+    }
+
+    private async Task ReloadPayloadsAsync()
+    {
+        _payloads = await PayloadService.GetAllAsync();
+    }
+
+    private void AddHeader() => _request.Headers.Add(new NameValueEntry());
+
+    private void RemoveHeader(NameValueEntry header) => _request.Headers.Remove(header);
+
+    private void AddQueryParam() => _request.QueryParameters.Add(new NameValueEntry());
+
+    private void RemoveQueryParam(NameValueEntry param) => _request.QueryParameters.Remove(param);
+
+    private void AddMultipartPart() => _request.MultipartParts.Add(new MultipartPartEntry());
+
+    private void RemoveMultipartPart(MultipartPartEntry part) => _request.MultipartParts.Remove(part);
+
+    private void ResetRequest()
+    {
+        _request.Method = ExplorerMethod.Get;
+        _request.Url = string.Empty;
+        _request.SelectedEnvironmentId = _environments.FirstOrDefault()?.Id.ToString() ?? string.Empty;
+        _request.Headers.Clear();
+        _request.QueryParameters.Clear();
+        _request.MultipartParts.Clear();
+        _request.Headers.Add(new NameValueEntry());
+        _request.QueryParameters.Add(new NameValueEntry());
+        _request.MultipartParts.Add(new MultipartPartEntry());
+        _request.JsonBody = """
+            {
+              "message": "hello"
+            }
+            """;
+        _request.BodyMode = ExplorerBodyMode.Json;
+        _request.SelectedPayloadId = string.Empty;
+        _errorMessage = null;
+    }
+
+    private async Task ApplySelectedPayloadAsync()
+    {
+        if (!Guid.TryParse(_request.SelectedPayloadId, out var payloadId))
+        {
+            return;
+        }
+
+        var payload = await PayloadService.GetByIdAsync(payloadId);
+        if (payload is null)
+        {
+            _errorMessage = "Selected payload was not found.";
+            return;
+        }
+
+        _request.BodyMode = ExplorerBodyMode.Json;
+        _request.JsonBody = payload.RenderJson();
+        _errorMessage = null;
+    }
+
+    private string GetSelectedPayloadPreview()
+    {
+        if (!Guid.TryParse(_request.SelectedPayloadId, out var payloadId))
+        {
+            return "No payload selected.";
+        }
+
+        var payload = _payloads.FirstOrDefault(item => item.Id == payloadId);
+        if (payload is null)
+        {
+            return "Payload not found.";
+        }
+
+        var preview = payload.RenderJson().ReplaceLineEndings(" ").Trim();
+        if (preview.Length <= 80)
+        {
+            return preview;
+        }
+
+        return preview[..80] + "...";
+    }
+
+    private async Task SendAsync()
+    {
+        _isSending = true;
+        _errorMessage = null;
+        _response.Clear();
+
+        try
+        {
+            var selectedEnvironment = ResolveEnvironment();
+            var variables = BuildVariables(selectedEnvironment);
+            var requestUri = BuildRequestUri(selectedEnvironment?.BaseUrl, _request.Url);
+            var headers = BuildHeaders(selectedEnvironment);
+            var queryParameters = BuildQueryParameters();
+            var body = BuildBody();
+            var request = new HttpRequestDefinition(
+                requestUri,
+                headers.Count == 0 ? null : headers,
+                queryParameters.Count == 0 ? null : queryParameters,
+                body,
+                selectedEnvironment?.Authentication.ToHttpAuthentication(),
+                variables.Count == 0 ? null : variables);
+
+            var stopwatch = Stopwatch.StartNew();
+            var result = await ExecuteAsync(request);
+            stopwatch.Stop();
+
+            _response.StatusCode = result.StatusCode;
+            _response.Body = result.Content;
+            _response.Headers = result.Headers
+                .OrderBy(item => item.Key, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(item => item.Key, item => string.Join(", ", item.Value), StringComparer.OrdinalIgnoreCase);
+            _response.ElapsedMs = stopwatch.Elapsed.TotalMilliseconds;
+
+            var resolvedRequest = HttpRequestTemplateResolver.Resolve(request);
+            await HistoryService.RecordAsync(CreateHistoryEntry(selectedEnvironment, _request.Method.ToString().ToUpperInvariant(), resolvedRequest, result, stopwatch.Elapsed));
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = ex.Message;
+        }
+        finally
+        {
+            _isSending = false;
+        }
+    }
+
+    private Task<HttpResponseResult> ExecuteAsync(HttpRequestDefinition request)
+        => _request.Method switch
+        {
+            ExplorerMethod.Get => HttpEngine.GetAsync(request),
+            ExplorerMethod.Post => HttpEngine.PostAsync(request),
+            ExplorerMethod.Put => HttpEngine.PutAsync(request),
+            ExplorerMethod.Patch => HttpEngine.PatchAsync(request),
+            ExplorerMethod.Delete => HttpEngine.DeleteAsync(request),
+            _ => throw new NotSupportedException($"Method '{_request.Method}' is not supported.")
+        };
+
+    private EnvironmentEntity? ResolveEnvironment()
+        => Guid.TryParse(_request.SelectedEnvironmentId, out var selectedId)
+            ? _environments.FirstOrDefault(item => item.Id == selectedId)
+            : null;
+
+    private static Uri BuildRequestUri(string? baseUrl, string requestUrl)
+    {
+        var trimmed = requestUrl?.Trim() ?? string.Empty;
+        if (Uri.TryCreate(trimmed, UriKind.Absolute, out var absolute))
+        {
+            return absolute;
+        }
+
+        var root = string.IsNullOrWhiteSpace(baseUrl) ? "http://localhost" : baseUrl.Trim();
+        return new Uri(new Uri(root, UriKind.Absolute), trimmed.StartsWith('/') ? trimmed[1..] : trimmed);
+    }
+
+    private Dictionary<string, string?> BuildHeaders(EnvironmentEntity? selectedEnvironment)
+    {
+        var headers = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+
+        if (selectedEnvironment is not null)
+        {
+            foreach (var header in selectedEnvironment.Headers)
+            {
+                headers[header.Name] = header.Value;
+            }
+        }
+
+        foreach (var header in _request.Headers.Where(item => !string.IsNullOrWhiteSpace(item.Name)))
+        {
+            headers[header.Name] = header.Value;
+        }
+
+        return headers;
+    }
+
+    private Dictionary<string, string?> BuildQueryParameters()
+    {
+        var query = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var item in _request.QueryParameters.Where(item => !string.IsNullOrWhiteSpace(item.Name)))
+        {
+            query[item.Name] = item.Value;
+        }
+
+        return query;
+    }
+
+    private Dictionary<string, string?> BuildVariables(EnvironmentEntity? selectedEnvironment)
+    {
+        var variables = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+
+        if (selectedEnvironment is not null)
+        {
+            foreach (var variable in selectedEnvironment.Variables.Where(item => !string.IsNullOrWhiteSpace(item.Name)))
+            {
+                variables[variable.Name] = variable.Value;
+            }
+        }
+
+        return variables;
+    }
+
+    private HttpRequestBody? BuildBody()
+        => _request.BodyMode switch
+        {
+            ExplorerBodyMode.None => null,
+            ExplorerBodyMode.Json => new HttpRequestBody.RawJson(_request.JsonBody),
+            ExplorerBodyMode.Multipart => new HttpRequestBody.Multipart(
+                _request.MultipartParts
+                    .Where(item => !string.IsNullOrWhiteSpace(item.Name))
+                    .Select(item => item.ToPart())
+                    .ToArray()),
+            _ => null
+        };
+
+    private static RequestHistoryEntry CreateHistoryEntry(
+        EnvironmentEntity? selectedEnvironment,
+        string method,
+        HttpRequestDefinition request,
+        HttpResponseResult result,
+        TimeSpan elapsed)
+        => new(
+            Guid.Empty,
+            DateTimeOffset.UtcNow,
+            selectedEnvironment?.Id,
+            selectedEnvironment?.Name,
+            new RequestHistoryRequestSnapshot(
+                method,
+                BuildSnapshotUrl(request),
+                request.Headers,
+                request.Body switch
+                {
+                    null => RequestHistoryBodyKind.None,
+                    HttpRequestBody.Json => RequestHistoryBodyKind.Json,
+                    HttpRequestBody.RawJson => RequestHistoryBodyKind.Json,
+                    HttpRequestBody.Multipart multipart => RequestHistoryBodyKind.Multipart,
+                    _ => RequestHistoryBodyKind.None
+                },
+                request.Body is HttpRequestBody.Json jsonBody
+                    ? System.Text.Json.JsonSerializer.Serialize(jsonBody.Value)
+                    : request.Body is HttpRequestBody.RawJson rawJsonBody
+                        ? rawJsonBody.Text
+                    : null,
+                request.Body is HttpRequestBody.Multipart multipartBody
+                    ? multipartBody.Parts.Select(part => new RequestHistoryMultipartPart(
+                            part.Name,
+                            Convert.ToBase64String(part.Content),
+                            part.FileName,
+                            part.ContentType))
+                        .ToArray()
+                    : []),
+            new RequestHistoryResponseSnapshot(
+                result.StatusCode,
+                result.Headers,
+                result.Content),
+            elapsed.TotalMilliseconds);
+
+    private static string BuildSnapshotUrl(HttpRequestDefinition request)
+    {
+        var builder = new UriBuilder(request.Url);
+        var queryParts = new List<string>();
+
+        if (!string.IsNullOrWhiteSpace(builder.Query))
+        {
+            queryParts.Add(builder.Query.TrimStart('?'));
+        }
+
+        if (request.QueryParameters is not null)
+        {
+            foreach (var pair in request.QueryParameters)
+            {
+                queryParts.Add($"{Uri.EscapeDataString(pair.Key)}={Uri.EscapeDataString(pair.Value ?? string.Empty)}");
+            }
+        }
+
+        builder.Query = string.Join("&", queryParts);
+        return builder.Uri.ToString();
+    }
+
+    private sealed class ExplorerRequestModel
+    {
+        public string SelectedEnvironmentId { get; set; } = string.Empty;
+
+        public string SelectedPayloadId { get; set; } = string.Empty;
+
+        public ExplorerMethod Method { get; set; } = ExplorerMethod.Get;
+
+        public string Url { get; set; } = string.Empty;
+
+        public List<NameValueEntry> Headers { get; } = [];
+
+        public List<NameValueEntry> QueryParameters { get; } = [];
+
+        public ExplorerBodyMode BodyMode { get; set; } = ExplorerBodyMode.Json;
+
+        public string JsonBody { get; set; } = string.Empty;
+
+        public List<MultipartPartEntry> MultipartParts { get; } = [];
+    }
+
+    private sealed class ExplorerResponseModel
+    {
+        public HttpStatusCode? StatusCode { get; set; }
+
+        public string? Body { get; set; }
+
+        public Dictionary<string, string> Headers { get; set; } = [];
+
+        public double? ElapsedMs { get; set; }
+
+        public void Clear()
+        {
+            StatusCode = null;
+            Body = null;
+            Headers.Clear();
+            ElapsedMs = null;
+        }
+    }
+
+    private sealed class NameValueEntry
+    {
+        public string Name { get; set; } = string.Empty;
+
+        public string Value { get; set; } = string.Empty;
+    }
+
+    private sealed class MultipartPartEntry
+    {
+        public string Name { get; set; } = string.Empty;
+
+        public string Value { get; set; } = string.Empty;
+
+        public string FileName { get; set; } = string.Empty;
+
+        public string ContentType { get; set; } = "text/plain; charset=utf-8";
+
+        public HttpMultipartPart ToPart()
+            => string.IsNullOrWhiteSpace(FileName)
+                ? HttpMultipartPart.Text(Name, Value, ContentType)
+                : HttpMultipartPart.File(Name, System.Text.Encoding.UTF8.GetBytes(Value), FileName, ContentType);
+    }
+
+    private enum ExplorerMethod
+    {
+        Get,
+        Post,
+        Put,
+        Patch,
+        Delete
+    }
+
+    private enum ExplorerBodyMode
+    {
+        None,
+        Json,
+        Multipart
+    }
+
+}

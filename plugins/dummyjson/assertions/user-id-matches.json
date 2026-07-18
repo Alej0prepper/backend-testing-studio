@@ -1,0 +1,10 @@
+{
+  "id": "user-id-matches",
+  "type": "JSONPath",
+  "target": "body",
+  "expected": "{{UserId}}",
+  "description": "The response user id must match UserId.",
+  "severity": "Error",
+  "message": "Expected response $.id to match {{UserId}}.",
+  "jsonPath": "$.id"
+}

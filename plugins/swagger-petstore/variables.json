@@ -1,0 +1,82 @@
+[
+  {
+    "name": "ApiKey",
+    "type": "string",
+    "defaultValue": "special-key",
+    "required": false,
+    "sensitive": true,
+    "description": "Example API key published by Swagger PetStore.",
+    "scope": "environment",
+    "exportable": false
+  },
+  {
+    "name": "PetId",
+    "type": "number",
+    "defaultValue": "987654321",
+    "required": true,
+    "sensitive": false,
+    "description": "Pet identifier used by CRUD scenarios.",
+    "scope": "scenario",
+    "exportable": true
+  },
+  {
+    "name": "PetName",
+    "type": "string",
+    "defaultValue": "BTS Dog",
+    "required": true,
+    "sensitive": false,
+    "description": "Initial pet name.",
+    "scope": "scenario",
+    "exportable": true
+  },
+  {
+    "name": "UpdatedPetName",
+    "type": "string",
+    "defaultValue": "BTS Dog Updated",
+    "required": true,
+    "sensitive": false,
+    "description": "Pet name after update.",
+    "scope": "scenario",
+    "exportable": true
+  },
+  {
+    "name": "PetStatus",
+    "type": "string",
+    "defaultValue": "available",
+    "required": true,
+    "sensitive": false,
+    "description": "Pet status accepted by Swagger PetStore.",
+    "scope": "scenario",
+    "exportable": true,
+    "validators": [
+      {
+        "type": "oneOf",
+        "values": [
+          "available",
+          "pending",
+          "sold"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "UpdatedPetStatus",
+    "type": "string",
+    "defaultValue": "sold",
+    "required": true,
+    "sensitive": false,
+    "description": "Pet status after update.",
+    "scope": "scenario",
+    "exportable": true,
+    "validators": [
+      {
+        "type": "oneOf",
+        "values": [
+          "available",
+          "pending",
+          "sold"
+        ]
+      }
+    ]
+  }
+]

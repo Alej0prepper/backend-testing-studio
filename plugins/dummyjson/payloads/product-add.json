@@ -1,0 +1,15 @@
+{
+  "id": "product-add",
+  "description": "Simulated product creation body.",
+  "contentType": "application/json",
+  "variables": [
+    "ProductTitle"
+  ],
+  "content": {
+    "title": "{{ProductTitle}}",
+    "description": "Created from Backend Testing Studio plugin.",
+    "price": 99.99,
+    "brand": "BTS",
+    "category": "testing"
+  }
+}

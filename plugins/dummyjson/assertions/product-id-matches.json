@@ -1,0 +1,10 @@
+{
+  "id": "product-id-matches",
+  "type": "JSONPath",
+  "target": "body",
+  "expected": "{{ProductId}}",
+  "description": "The response product id must match ProductId.",
+  "severity": "Error",
+  "message": "Expected response $.id to match {{ProductId}}.",
+  "jsonPath": "$.id"
+}

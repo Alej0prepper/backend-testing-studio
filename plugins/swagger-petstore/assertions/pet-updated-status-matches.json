@@ -1,0 +1,10 @@
+{
+  "id": "pet-updated-status-matches",
+  "type": "JSONPath",
+  "target": "body",
+  "expected": "{{UpdatedPetStatus}}",
+  "description": "The response pet status must match the update payload.",
+  "severity": "Error",
+  "message": "Expected response $.status to match {{UpdatedPetStatus}}.",
+  "jsonPath": "$.status"
+}

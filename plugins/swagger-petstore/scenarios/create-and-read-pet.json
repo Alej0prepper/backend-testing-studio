@@ -1,0 +1,46 @@
+{
+  "id": "create-and-read-pet",
+  "name": "Create and read pet",
+  "description": "Create a Swagger PetStore pet and verify that it can be read by id.",
+  "tags": [
+    "pet",
+    "smoke"
+  ],
+  "onFailure": "Stop",
+  "steps": [
+    {
+      "execute": "create-pet",
+      "with": {
+        "payload": "pet-create"
+      },
+      "saveVariables": [
+        {
+          "name": "PetId",
+          "source": "JsonPath",
+          "jsonPath": "$.id",
+          "required": true
+        }
+      ],
+      "assertions": [
+        "status-ok",
+        "pet-id-matches"
+      ],
+      "enabled": true
+    },
+    {
+      "execute": "get-pet",
+      "with": {
+        "PetId": "{{PetId}}"
+      },
+      "assertions": [
+        "status-ok",
+        "pet-id-matches",
+        "pet-name-matches"
+      ],
+      "enabled": true
+    }
+  ],
+  "outputs": [
+    "PetId"
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "id": "swagger-petstore-live",
+  "name": "Swagger PetStore Live",
+  "baseUrl": "https://petstore.swagger.io/v2",
+  "authentication": {
+    "type": "ApiKey",
+    "location": "Header",
+    "name": "api_key",
+    "value": "{{ApiKey}}"
+  },
+  "headers": {
+    "Accept": "application/json"
+  },
+  "timeout": {
+    "milliseconds": 30000
+  },
+  "variables": {
+    "ApiKey": "special-key"
+  },
+  "notes": "Public sample API. Data is shared and may be reset by the provider."
+}

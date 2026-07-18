@@ -1,0 +1,37 @@
+.payloads-page {
+    display: grid;
+    gap: 20px;
+}
+
+.payload-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 42px;
+}
+
+.tag-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 42px;
+}
+
+.payload-list {
+    display: grid;
+    gap: 12px;
+}
+
+.payload-item {
+    display: grid;
+    gap: 12px;
+    padding: 16px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.payload-item h4,
+.payload-item p {
+    margin: 0;
+}
+
+@media (max-width: 720px) {
+    .payload-row,
+    .tag-row {
+        grid-template-columns: 1fr;
+    }
+}

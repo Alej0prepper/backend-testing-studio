@@ -1,0 +1,60 @@
+{
+  "id": "login-and-auth-user",
+  "name": "Login and get auth user",
+  "description": "Login with DummyJSON credentials, capture tokens, and fetch the authenticated user.",
+  "tags": [
+    "auth",
+    "smoke"
+  ],
+  "onFailure": "Stop",
+  "steps": [
+    {
+      "execute": "login",
+      "with": {
+        "payload": "login-request"
+      },
+      "saveVariables": [
+        {
+          "name": "AccessToken",
+          "source": "JsonPath",
+          "jsonPath": "$.accessToken",
+          "required": true
+        },
+        {
+          "name": "RefreshToken",
+          "source": "JsonPath",
+          "jsonPath": "$.refreshToken",
+          "required": true
+        },
+        {
+          "name": "UserId",
+          "source": "JsonPath",
+          "jsonPath": "$.id",
+          "required": true
+        }
+      ],
+      "assertions": [
+        "status-ok",
+        "access-token-present",
+        "username-matches"
+      ],
+      "enabled": true
+    },
+    {
+      "execute": "get-auth-user",
+      "with": {
+        "AccessToken": "{{AccessToken}}"
+      },
+      "assertions": [
+        "status-ok",
+        "user-id-matches"
+      ],
+      "enabled": true
+    }
+  ],
+  "outputs": [
+    "AccessToken",
+    "RefreshToken",
+    "UserId"
+  ]
+}
