@@ -1,0 +1,21 @@
+{
+  "id": "swagger-petstore",
+  "name": "Swagger PetStore",
+  "version": "1.0.0",
+  "schemaVersion": "1.0.0",
+  "engineVersion": "0.15.0",
+  "author": "Backend Testing Studio",
+  "description": "Declarative CRUD plugin for the public Swagger PetStore pet endpoints.",
+  "defaultEnvironment": "swagger-petstore-live",
+  "modules": [
+    "pet"
+  ],
+  "tags": [
+    "sample",
+    "swagger",
+    "crud",
+    "pets"
+  ],
+  "repositoryUrl": "https://petstore.swagger.io",
+  "supportUrl": "https://petstore.swagger.io/v2/swagger.json"
+}

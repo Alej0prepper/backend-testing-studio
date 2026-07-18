@@ -1,0 +1,10 @@
+{
+  "id": "pet-id-matches",
+  "type": "JSONPath",
+  "target": "body",
+  "expected": "{{PetId}}",
+  "description": "The response pet id must match the runtime PetId.",
+  "severity": "Error",
+  "message": "Expected response $.id to match {{PetId}}.",
+  "jsonPath": "$.id"
+}

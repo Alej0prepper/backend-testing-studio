@@ -1,0 +1,10 @@
+{
+  "id": "pet-name-matches",
+  "type": "JSONPath",
+  "target": "body",
+  "expected": "{{PetName}}",
+  "description": "The response pet name must match the creation payload.",
+  "severity": "Error",
+  "message": "Expected response $.name to match {{PetName}}.",
+  "jsonPath": "$.name"
+}

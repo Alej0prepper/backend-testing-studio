@@ -1,0 +1,10 @@
+{
+  "id": "pet-updated-name-matches",
+  "type": "JSONPath",
+  "target": "body",
+  "expected": "{{UpdatedPetName}}",
+  "description": "The response pet name must match the update payload.",
+  "severity": "Error",
+  "message": "Expected response $.name to match {{UpdatedPetName}}.",
+  "jsonPath": "$.name"
+}

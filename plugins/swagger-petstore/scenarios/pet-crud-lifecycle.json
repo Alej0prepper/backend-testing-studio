@@ -1,0 +1,94 @@
+{
+  "id": "pet-crud-lifecycle",
+  "name": "Pet CRUD lifecycle",
+  "description": "Create, read, update, read again and delete a Swagger PetStore pet.",
+  "tags": [
+    "pet",
+    "crud",
+    "happy-path"
+  ],
+  "variables": {
+    "PetId": "{{PetId}}",
+    "PetName": "{{PetName}}",
+    "UpdatedPetName": "{{UpdatedPetName}}",
+    "PetStatus": "{{PetStatus}}",
+    "UpdatedPetStatus": "{{UpdatedPetStatus}}"
+  },
+  "onFailure": "Stop",
+  "steps": [
+    {
+      "execute": "create-pet",
+      "description": "Create a pet with the configured runtime variables.",
+      "with": {
+        "payload": "pet-create"
+      },
+      "saveVariables": [
+        {
+          "name": "PetId",
+          "source": "JsonPath",
+          "jsonPath": "$.id",
+          "required": true
+        }
+      ],
+      "assertions": [
+        "status-ok",
+        "pet-id-matches",
+        "pet-name-matches"
+      ],
+      "enabled": true
+    },
+    {
+      "execute": "get-pet",
+      "description": "Fetch the pet created in the previous step.",
+      "with": {
+        "PetId": "{{PetId}}"
+      },
+      "assertions": [
+        "status-ok",
+        "pet-id-matches",
+        "pet-name-matches"
+      ],
+      "enabled": true
+    },
+    {
+      "execute": "update-pet",
+      "description": "Update the pet name and status.",
+      "with": {
+        "payload": "pet-update"
+      },
+      "assertions": [
+        "status-ok",
+        "pet-id-matches",
+        "pet-updated-name-matches",
+        "pet-updated-status-matches"
+      ],
+      "enabled": true
+    },
+    {
+      "execute": "get-pet",
+      "description": "Fetch the updated pet and verify the id.",
+      "with": {
+        "PetId": "{{PetId}}"
+      },
+      "assertions": [
+        "status-ok",
+        "pet-id-matches"
+      ],
+      "enabled": true
+    },
+    {
+      "execute": "delete-pet",
+      "description": "Delete the test pet.",
+      "with": {
+        "PetId": "{{PetId}}"
+      },
+      "assertions": [
+        "status-ok"
+      ],
+      "enabled": true
+    }
+  ],
+  "outputs": [
+    "PetId"
+  ]
+}
