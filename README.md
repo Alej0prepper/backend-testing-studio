@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-# backend-testing-studio
-An extensible plugin-based platform for testing, validating, and automating business scenarios across REST APIs, gRPC services, and microservice architectures.
-=======
 # Backend Testing Studio
 
 Backend Testing Studio es una herramienta local para probar APIs backend desde una interfaz web. El proyecto está organizado por capas y motores desacoplados para soportar exploración HTTP, ambientes, variables, historial, payloads reutilizables, assertions, escenarios, reportes y plugins.
@@ -516,6 +512,7 @@ Puede aparecer una advertencia de vulnerabilidad para una versión transitiva de
 - `CODING_STANDARDS.md`: convenciones de código.
 - `CONTRIBUTING.md`: cómo contribuir.
 - `PLUGIN_SPEC.md`: contrato de plugins.
+- `PLUGIN_CREATION_GUIDE.md`: guia practica para crear plugins desde una API.
 - `ROADMAP.md`: planificación por versiones.
 - `USER_MANUAL.md`: manual de uso paso a paso.
 - `progreso`: seguimiento de prompts aplicados.
@@ -529,4 +526,3 @@ Puede aparecer una advertencia de vulnerabilidad para una versión transitiva de
 5. Permitir exportar reportes desde la aplicación.
 6. Endurecer validaciones de JSON plugin contra `PLUGIN_SPEC.md`.
 7. Actualizar dependencias con advertencias de seguridad.
->>>>>>> master
