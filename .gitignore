@@ -1,26 +1,76 @@
+# .NET build output
 bin/
 obj/
+**/bin/
+**/obj/
+artifacts/
+publish/
+Debug/
+Release/
+x64/
+x86/
+*.dll
+*.pdb
+*.exe
+*.deps.json
+*.runtimeconfig.json
+*.staticwebassets*.json
 
+# NuGet
+packages/
+*.nupkg
+*.snupkg
+*.nuspec
+project.assets.json
+project.nuget.cache
+*.csproj.nuget.dgspec.json
+*.csproj.nuget.g.props
+*.csproj.nuget.g.targets
+
+# IDE and local user state
 *.user
 *.suo
 *.userosscache
 *.sln.docstates
+*.rsuser
 
 .vs/
 .vscode/
 .idea/
 
+# Test and coverage output
 TestResults/
 *.trx
 *.coverage
 *.coveragexml
+*.coveragejson
+*.cobertura.xml
 coverage/
+CoverageResults/
 
+# Local SQLite/runtime data
 *.db
 *.db-shm
 *.db-wal
+*.sqlite
+*.sqlite3
 
+# Logs and temp files
 *.log
+logs/
+tmp/
+temp/
+*.tmp
+*.bak
+*.orig
 
+# ASP.NET/Razor generated assets
+**/scopedcss/
+**/staticwebassets/
+**/compressed/
+*.rz.scp.css
+*.bundle.scp.css
+
+# OS files
 .DS_Store
 Thumbs.db
