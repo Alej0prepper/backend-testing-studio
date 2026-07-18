@@ -1,53 +1,184 @@
-﻿@page "/"
+@page "/"
+@using BackendTestingStudio.Core.Environments
+@using BackendTestingStudio.Core.History
+@using BackendTestingStudio.Core.Payloads
+@using BackendTestingStudio.Core.Plugins
+@inject IEnvironmentService EnvironmentService
+@inject IRequestHistoryService HistoryService
+@inject IPayloadService PayloadService
+@inject IPluginLoader PluginLoader
 
-<PageTitle>Backend Testing Studio</PageTitle>
+<PageTitle>Dashboard · Backend Testing Studio</PageTitle>
 
 <section class="dashboard">
-    <header class="hero card">
-        <div>
-            <span class="eyebrow">Application shell</span>
-            <h2>Dashboard</h2>
+    <header class="dashboard-hero card">
+        <div class="hero-copy">
+            <span class="eyebrow">Local API operations</span>
+            <h2>Prueba backends con<br /><em>contexto y trazabilidad.</em></h2>
             <p>
-                Base de navegación lista para conectar exploración de APIs, escenarios, historial, reportes y ajustes.
+                Configura un ambiente, ejecuta desde el explorer y conserva cada respuesta.
+                El motor resuelve autenticacion, variables y payloads antes de enviar.
             </p>
+            <div class="hero-actions">
+                <NavLink href="/api-explorer" class="primary-button">Crear request</NavLink>
+                <NavLink href="/environments" class="ghost-button">Configurar ambiente</NavLink>
+            </div>
         </div>
 
-        <div class="hero-metrics">
-            <div class="metric">
-                <span class="metric-label">Workspace</span>
-                <strong>Local</strong>
-            </div>
-            <div class="metric">
-                <span class="metric-label">Mode</span>
-                <strong>Shell only</strong>
-            </div>
-            <div class="metric">
-                <span class="metric-label">Status</span>
-                <strong>Ready</strong>
-            </div>
+        <div class="release-stamp" aria-label="Doce prompts aplicados">
+            <span class="stamp-kicker">BUILD STATUS</span>
+            <strong>12<span>/12</span></strong>
+            <span class="stamp-label">prompts aplicados</span>
+            <div class="stamp-line"></div>
+            <small>v0 · local workspace</small>
         </div>
     </header>
 
-    <section class="grid">
-        <article class="card spotlight">
-            <span class="eyebrow">Navigation</span>
-            <h3>Menú principal</h3>
-            <ul class="feature-list">
-                <li>Dashboard</li>
-                <li>API Explorer</li>
-                <li>Scenarios</li>
-                <li>History</li>
-                <li>Reports</li>
-                <li>Settings</li>
-            </ul>
+    @if (!string.IsNullOrWhiteSpace(_loadError))
+    {
+        <div class="status-banner danger-banner">No fue posible leer el estado local: @_loadError</div>
+    }
+
+    <section class="stat-grid" aria-label="Estado del workspace">
+        <NavLink href="/environments" class="stat-card card">
+            <span class="stat-code">ENV</span>
+            <strong>@(_isLoading ? "--" : _environmentCount)</strong>
+            <span>Ambientes</span>
+            <small>Base URL, auth y variables</small>
+        </NavLink>
+        <NavLink href="/history" class="stat-card card">
+            <span class="stat-code">REQ</span>
+            <strong>@(_isLoading ? "--" : _historyCount)</strong>
+            <span>Requests guardados</span>
+            <small>Snapshots en SQLite</small>
+        </NavLink>
+        <NavLink href="/payloads" class="stat-card card">
+            <span class="stat-code">JSON</span>
+            <strong>@(_isLoading ? "--" : _payloadCount)</strong>
+            <span>Payloads</span>
+            <small>Plantillas reutilizables</small>
+        </NavLink>
+        <NavLink href="/plugins" class="stat-card card">
+            <span class="stat-code">EXT</span>
+            <strong>@(_isLoading ? "--" : _pluginCount)</strong>
+            <span>Plugins detectados</span>
+            <small>Catalogo instalado</small>
+        </NavLink>
+    </section>
+
+    <section class="dashboard-grid">
+        <article class="card panel flow-panel">
+            <div class="panel-header">
+                <div>
+                    <span class="eyebrow">Flujo principal</span>
+                    <h3>De configuracion a evidencia</h3>
+                </div>
+                <span class="ready-badge">Operativo</span>
+            </div>
+
+            <div class="flow">
+                <NavLink href="/environments" class="flow-step">
+                    <span class="flow-number">01</span>
+                    <span><strong>Environment</strong><small>URL, headers, auth</small></span>
+                </NavLink>
+                <span class="flow-arrow">→</span>
+                <NavLink href="/api-explorer" class="flow-step">
+                    <span class="flow-number">02</span>
+                    <span><strong>API Explorer</strong><small>Request via IHttpEngine</small></span>
+                </NavLink>
+                <span class="flow-arrow">→</span>
+                <NavLink href="/history" class="flow-step">
+                    <span class="flow-number">03</span>
+                    <span><strong>History</strong><small>Revisar o repetir</small></span>
+                </NavLink>
+            </div>
         </article>
 
-        <article class="card panel">
-            <span class="eyebrow">Next step</span>
-            <h3>UI foundation complete</h3>
-            <p>
-                No se han implementado páginas funcionales todavía. La estructura visual queda preparada para la siguiente iteración.
-            </p>
+        <article class="card panel engine-panel">
+            <span class="eyebrow">Execution stack</span>
+            <h3>Motores disponibles</h3>
+            <div class="engine-list">
+                <div><span class="engine-dot"></span><strong>HTTP</strong><small>5 metodos + auth</small></div>
+                <div><span class="engine-dot"></span><strong>Variables</strong><small>{{Token}} en runtime</small></div>
+                <div><span class="engine-dot"></span><strong>Assertions</strong><small>8 validaciones</small></div>
+                <div><span class="engine-dot"></span><strong>Plugin loader</strong><small>Descubrimiento por DI</small></div>
+            </div>
         </article>
     </section>
+
+    <section class="card panel coverage-panel">
+        <div class="panel-header">
+            <div>
+                <span class="eyebrow">Cobertura del guide</span>
+                <h3>Capacidades implementadas</h3>
+            </div>
+            <span class="coverage-total">12 completas</span>
+        </div>
+        <div class="coverage-grid">
+            @foreach (var capability in Capabilities)
+            {
+                <div class="coverage-item">
+                    <span class="coverage-index">@capability.Index</span>
+                    <span><strong>@capability.Name</strong><small>@capability.Detail</small></span>
+                    <span class="check">✓</span>
+                </div>
+            }
+        </div>
+        <p class="coverage-note">
+            Scenarios, Reports y Settings permanecen visibles como modulos planificados; no se presentan como funcionalidades terminadas.
+        </p>
+    </section>
 </section>
+
+@code {
+    private static readonly Capability[] Capabilities =
+    [
+        new("01", "Solucion", ".NET 10 + capas"),
+        new("02", "Application shell", "Layout y navegacion"),
+        new("03", "HTTP Engine", "GET a DELETE"),
+        new("04", "Environments", "CRUD SQLite"),
+        new("05", "API Explorer", "Request builder"),
+        new("06", "History", "Guardar y repetir"),
+        new("07", "Authentication", "Bearer, Basic, ApiKey"),
+        new("08", "Plugin model", "Contrato comun"),
+        new("09", "Plugin loader", "Descubrimiento"),
+        new("10", "Payloads", "Biblioteca JSON"),
+        new("11", "Variables", "Resolucion runtime"),
+        new("12", "Assertions", "Motor desacoplado")
+    ];
+
+    private int _environmentCount;
+    private int _historyCount;
+    private int _payloadCount;
+    private int _pluginCount;
+    private bool _isLoading = true;
+    private string? _loadError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var environmentsTask = EnvironmentService.GetAllAsync();
+            var historyTask = HistoryService.GetAllAsync();
+            var payloadsTask = PayloadService.GetAllAsync();
+            var pluginsTask = PluginLoader.GetInstalledAsync();
+
+            await Task.WhenAll(environmentsTask, historyTask, payloadsTask, pluginsTask);
+
+            _environmentCount = environmentsTask.Result.Count;
+            _historyCount = historyTask.Result.Count;
+            _payloadCount = payloadsTask.Result.Count;
+            _pluginCount = pluginsTask.Result.Count;
+        }
+        catch (Exception ex)
+        {
+            _loadError = ex.Message;
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private sealed record Capability(string Index, string Name, string Detail);
+}

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using BackendTestingStudio.Core.History;
@@ -10,6 +11,10 @@ using BackendTestingStudio.UI.History;
 using BackendTestingStudio.UI.Components;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// dotnet run --project may keep the caller's working directory and environment.
+// Explicitly load the development manifest so framework and scoped CSS assets remain available.
+builder.WebHost.UseStaticWebAssets();
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();

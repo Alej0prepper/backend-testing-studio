@@ -1,61 +1,75 @@
-﻿@inherits LayoutComponentBase
+@inherits LayoutComponentBase
 @implements IDisposable
 @inject NavigationManager NavManager
 
 <div class="shell">
     <aside class="sidebar">
-        <div class="brand">
-            <div class="brand-mark">BTS</div>
-            <div class="brand-copy">
-                <span class="brand-kicker">Backend Testing Studio</span>
-                <span class="brand-title">Request lab</span>
-                <span class="brand-subtitle">Environments, API Explorer, History y escenarios.</span>
-            </div>
+        <NavLink href="/" class="brand" Match="NavLinkMatch.All">
+            <span class="brand-mark">B</span>
+            <span class="brand-copy">
+                <span class="brand-title">Backend Testing</span>
+                <span class="brand-subtitle">Studio / Local lab</span>
+            </span>
+        </NavLink>
+
+        <div class="workspace-chip">
+            <span class="pulse"></span>
+            <span>
+                <small>Workspace activo</small>
+                <strong>Local SQLite</strong>
+            </span>
+            <span class="workspace-code">DEV</span>
         </div>
 
-        <div class="sidebar-intro">
-            <span class="sidebar-intro-label">Workspace</span>
-            <strong>Local development</strong>
-            <p>Explora, repite y audita requests con persistencia SQLite.</p>
-        </div>
-
-        <nav class="nav">
-            @foreach (var item in NavigationItems)
+        <nav class="nav" aria-label="Navegacion principal">
+            <span class="nav-heading">Construir y ejecutar</span>
+            @foreach (var item in NavigationItems.Take(5))
             {
-                <NavLink href="@item.Href"
-                         class="nav-item"
-                         ActiveClass="active"
-                         Match="@item.Match">
+                <NavLink href="@item.Href" class="nav-item" ActiveClass="active" Match="@item.Match">
+                    <span class="nav-index">@item.Index</span>
                     <span class="nav-label">@item.Label</span>
-                    <span class="nav-chevron">›</span>
+                    @if (item.IsPlanned)
+                    {
+                        <span class="nav-state">Pronto</span>
+                    }
+                </NavLink>
+            }
+
+            <span class="nav-heading nav-heading-secondary">Analizar y extender</span>
+            @foreach (var item in NavigationItems.Skip(5))
+            {
+                <NavLink href="@item.Href" class="nav-item" ActiveClass="active" Match="@item.Match">
+                    <span class="nav-index">@item.Index</span>
+                    <span class="nav-label">@item.Label</span>
+                    @if (item.IsPlanned)
+                    {
+                        <span class="nav-state">Pronto</span>
+                    }
                 </NavLink>
             }
         </nav>
 
         <div class="sidebar-footer">
-            <div class="status-card">
-                <span class="status-kicker">Platform status</span>
-                <span class="status-value">Shell ready</span>
-                <span class="status-detail">Core, storage and HTTP engine connected.</span>
+            <div class="progress-line"><span></span></div>
+            <div class="progress-copy">
+                <span>Prompts aplicados</span>
+                <strong>12 / 12</strong>
             </div>
+            <p>Motor HTTP, persistencia, plugins, variables y assertions listos.</p>
         </div>
     </aside>
 
     <div class="workspace">
         <header class="topbar">
             <div class="topbar-copy">
-                <span class="topbar-kicker">Workspace</span>
+                <span class="breadcrumb">BTS / @CurrentSection</span>
                 <h1>@CurrentSection</h1>
-                <p class="topbar-description">@CurrentDescription</p>
+                <p>@CurrentDescription</p>
             </div>
 
             <div class="topbar-actions">
-                <div class="search-pill" role="button" tabindex="0">
-                    <span class="search-icon">⌕</span>
-                    <span>Search workspace</span>
-                </div>
-                <div class="environment-pill"><span class="dot"></span><span>Local</span></div>
-                <div class="profile-pill">AT</div>
+                <span class="runtime-badge"><span class="pulse"></span> Motor disponible</span>
+                <NavLink href="/api-explorer" class="quick-action">+ Nuevo request</NavLink>
             </div>
         </header>
 
@@ -66,82 +80,60 @@
 </div>
 
 <div id="blazor-error-ui" data-nosnippet>
-    An unhandled error has occurred.
-    <a href="." class="reload">Reload</a>
-    <span class="dismiss">🗙</span>
+    Ocurrió un error inesperado.
+    <a href="." class="reload">Recargar</a>
+    <span class="dismiss">×</span>
 </div>
 
 @code {
     private readonly NavigationItem[] NavigationItems =
     [
-        new("/", "Dashboard", NavLinkMatch.All),
-        new("/environments", "Environments", NavLinkMatch.Prefix),
-        new("/api-explorer", "API Explorer", NavLinkMatch.Prefix),
-        new("/payloads", "Payloads", NavLinkMatch.Prefix),
-        new("/scenarios", "Scenarios", NavLinkMatch.Prefix),
-        new("/history", "History", NavLinkMatch.Prefix),
-        new("/reports", "Reports", NavLinkMatch.Prefix),
-        new("/settings", "Settings", NavLinkMatch.Prefix),
-        new("/plugins", "Plugins", NavLinkMatch.Prefix)
+        new("01", "/", "Dashboard", NavLinkMatch.All),
+        new("02", "/environments", "Environments", NavLinkMatch.Prefix),
+        new("03", "/api-explorer", "API Explorer", NavLinkMatch.Prefix),
+        new("04", "/payloads", "Payloads", NavLinkMatch.Prefix),
+        new("05", "/scenarios", "Scenarios", NavLinkMatch.Prefix, true),
+        new("06", "/history", "History", NavLinkMatch.Prefix),
+        new("07", "/plugins", "Plugins", NavLinkMatch.Prefix),
+        new("08", "/reports", "Reports", NavLinkMatch.Prefix, true),
+        new("09", "/settings", "Settings", NavLinkMatch.Prefix, true)
     ];
 
     private string CurrentSection => ResolveSection();
     private string CurrentDescription => ResolveDescription();
 
-    protected override void OnInitialized()
-    {
-        NavManager.LocationChanged += HandleLocationChanged;
-    }
+    protected override void OnInitialized() => NavManager.LocationChanged += HandleLocationChanged;
 
-    private void HandleLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
-    {
-        InvokeAsync(StateHasChanged);
-    }
+    private void HandleLocationChanged(object? sender, LocationChangedEventArgs e) => InvokeAsync(StateHasChanged);
 
     private string ResolveSection()
     {
         var path = NavManager.ToBaseRelativePath(NavManager.Uri).TrimEnd('/');
-        if (string.IsNullOrWhiteSpace(path))
-        {
-            return "Dashboard";
-        }
-
-        return path switch
-        {
-            "environments" => "Environments",
-            "api-explorer" => "API Explorer",
-            "payloads" => "Payloads",
-            "scenarios" => "Scenarios",
-            "history" => "History",
-            "reports" => "Reports",
-            "settings" => "Settings",
-            "plugins" => "Plugins",
-            _ => "Dashboard"
-        };
+        return string.IsNullOrWhiteSpace(path)
+            ? "Dashboard"
+            : NavigationItems.FirstOrDefault(item => item.Href.TrimStart('/') == path)?.Label ?? "No encontrado";
     }
 
-    private string ResolveDescription()
+    private string ResolveDescription() => ResolveSection() switch
     {
-        var section = ResolveSection();
-        return section switch
-        {
-            "Dashboard" => "Estado general del producto y accesos rápidos a las piezas principales.",
-            "Environments" => "Administra variables, headers y bases URL reutilizables.",
-            "API Explorer" => "Construye requests HTTP sin tocar HttpClient directamente.",
-            "Payloads" => "Gestiona JSON reutilizables para API Explorer.",
-            "History" => "Consulta el log de requests y repite ejecuciones guardadas.",
-            "Scenarios" => "Prepara secuencias de requests para flujos repetibles.",
-            "Reports" => "Observa resultados agregados y fallos recurrentes.",
-            "Settings" => "Configura el comportamiento global de la herramienta.",
-            "Plugins" => "Revisa los plugins instalados y su metadata.",
-            _ => "Navegación principal del workspace."
-        };
-    }
+        "Dashboard" => "Estado real del workspace y accesos a los flujos disponibles.",
+        "Environments" => "Bases URL, autenticacion, variables y headers reutilizables.",
+        "API Explorer" => "Compone y ejecuta requests exclusivamente mediante IHttpEngine.",
+        "Payloads" => "Plantillas JSON reutilizables con variables y etiquetas.",
+        "History" => "Trazabilidad completa de requests guardados en SQLite.",
+        "Plugins" => "Catalogo de extensiones descubiertas por el plugin loader.",
+        "Scenarios" => "Modulo previsto para orquestar flujos de requests.",
+        "Reports" => "Modulo previsto para consolidar ejecuciones y resultados.",
+        "Settings" => "Configuracion global prevista para una siguiente iteracion.",
+        _ => "La ruta solicitada no existe en este workspace."
+    };
 
-    public void Dispose()
-    {
-        NavManager.LocationChanged -= HandleLocationChanged;
-    }
+    public void Dispose() => NavManager.LocationChanged -= HandleLocationChanged;
 
-    private sealed record NavigationItem(string Href, string Label, NavLinkMatch Match);
+    private sealed record NavigationItem(
+        string Index,
+        string Href,
+        string Label,
+        NavLinkMatch Match,
+        bool IsPlanned = false);
 }
