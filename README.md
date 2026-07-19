@@ -513,6 +513,7 @@ A vulnerability warning may appear for a transitive SQLite package version. The 
 - `CONTRIBUTING.md`: how to contribute.
 - `PLUGIN_SPEC.md`: plugin contract.
 - `PLUGIN_CREATION_GUIDE.md`: practical guide for creating plugins from an API.
+- `API_TO_PLUGIN_PROMPTS.md`: reusable prompt pack for generating plugins from API documentation.
 - `ROADMAP.md`: roadmap by version.
 - `USER_MANUAL.md`: step-by-step user manual.
 - `progreso`: applied prompt tracking.
