@@ -60,6 +60,7 @@ CoverageResults/
 logs/
 tmp/
 temp/
+.private/
 *.tmp
 *.bak
 *.orig
