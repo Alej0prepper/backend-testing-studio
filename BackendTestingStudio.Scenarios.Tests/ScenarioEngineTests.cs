@@ -164,6 +164,35 @@ public sealed class ScenarioEngineTests
         Assert.Empty(http.Requests);
     }
 
+    [Fact]
+    public async Task ExecuteAsync_RuntimeOverrideHasHighestPrecedenceAndIsNotReplacedByCapture()
+    {
+        var http = new FakeHttpEngine(Response(HttpStatusCode.OK, """{"value":"captured"}"""));
+        var engine = CreateEngine(http);
+        var request = new HttpRequestDefinition(
+            new Uri("https://api.test/{{Value}}"),
+            variables: new Dictionary<string, string?> { ["Value"] = "request" });
+        var scenario = new ScenarioDefinition(
+            "precedence",
+            "Precedence",
+            [
+                new ScenarioStepDefinition(
+                    "Execute",
+                    ScenarioHttpMethod.Get,
+                    request,
+                    saveVariables: [new ScenarioVariableCapture("Value", ScenarioVariableSource.JsonPath, "$.value")],
+                    variables: new Dictionary<string, string?> { ["Value"] = "step" })
+            ],
+            new Dictionary<string, string?> { ["Value"] = "scenario" });
+
+        var result = await engine.ExecuteAsync(
+            scenario,
+            new Dictionary<string, string?> { ["Value"] = "runtime" });
+
+        Assert.Equal("https://api.test/runtime", http.Requests.Single().Url.ToString());
+        Assert.Equal("runtime", result.Variables["Value"]);
+    }
+
     private static ScenarioEngine CreateEngine(IHttpEngine httpEngine)
         => new(httpEngine, new AssertionEngine());
 

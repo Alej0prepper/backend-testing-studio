@@ -1,0 +1,205 @@
+@page "/scenarios"
+@using BackendTestingStudio.Core.Plugins
+@using BackendTestingStudio.Core.Runs
+@using BackendTestingStudio.Core.Security
+@inject IPluginWorkspace Workspace
+@inject IScenarioRunService Runner
+@inject ISecretStore SecretStore
+
+<PageTitle>Scenarios</PageTitle>
+
+<section class="plugins-page">
+    <header class="hero card">
+        <div><span class="eyebrow">Sequential runner</span><h2>Scenarios</h2><p>Ejecuta el mismo contrato y servicio usados por la CLI.</p></div>
+        <div class="hero-metrics">
+            <div class="metric"><span class="metric-label">Plugin</span><strong>@(Workspace.Active?.Plugin?.Name ?? "None")</strong></div>
+            <div class="metric"><span class="metric-label">Run</span><strong>@(_running ? "Running" : _result?.Report?.Summary.Status ?? "Idle")</strong></div>
+        </div>
+    </header>
+
+    @if (Workspace.Active is not { IsValid: true, Plugin: { } plugin })
+    {
+        <section class="card panel empty-state">
+            Open and validate a plugin first. <NavLink href="/plugins">Go to Plugins</NavLink>
+        </section>
+    }
+    else
+    {
+        <section class="card panel">
+            <div class="form-grid two-cols">
+                <label class="field">
+                    <span>Environment</span>
+                    <select @bind="_environmentId">
+                        @foreach (var environment in plugin.Environments)
+                        {
+                            <option value="@environment.Id">@environment.Name (@environment.Level)</option>
+                        }
+                    </select>
+                </label>
+                <label class="field">
+                    <span>Scenario</span>
+                    <select @bind="_scenarioId">
+                        @foreach (var scenario in plugin.Scenarios)
+                        {
+                            <option value="@scenario.Id">@scenario.Name</option>
+                        }
+                    </select>
+                </label>
+            </div>
+
+            @if (plugin.Variables.Any(item => item.Sensitive && !item.Computed))
+            {
+                <div class="section-block">
+                    <h4>Session-only secrets</h4>
+                    <p class="helper-text">These values are held in memory only and are redacted from history and reports.</p>
+                    <div class="form-grid two-cols">
+                        @foreach (var variable in plugin.Variables.Where(item => item.Sensitive && !item.Computed))
+                        {
+                            var input = GetSecret(variable.Name);
+                            <label class="field">
+                                <span>@variable.Name @(variable.Required ? "(required)" : "")</span>
+                                <input type="password" autocomplete="off" @bind="input.Value" />
+                            </label>
+                        }
+                    </div>
+                </div>
+            }
+
+            <label class="field">
+                <span>Runtime overrides (one Name=Value per line)</span>
+                <textarea rows="4" @bind="_overrides"></textarea>
+            </label>
+            <label class="field">
+                <span><input type="checkbox" @bind="_allowProduction" /> Authorize mutating operations in Production</span>
+            </label>
+            <div class="actions">
+                <button type="button" class="primary-button" @onclick="RunAsync" disabled="@_running">Run</button>
+                <button type="button" class="ghost-button" @onclick="Cancel" disabled="@(!_running)">Cancel</button>
+            </div>
+        </section>
+
+        @if (!string.IsNullOrWhiteSpace(_error))
+        {
+            <div class="status-banner danger-banner">@_error</div>
+        }
+
+        @if (_result?.Report is { } report)
+        {
+            <section class="card panel">
+                <div class="panel-header">
+                    <div><span class="eyebrow">Run @_result.RunId.ToString("N")</span><h3>@report.ScenarioName</h3></div>
+                    <span class="count-pill">@report.Summary.Status</span>
+                </div>
+                <div class="plugin-meta">
+                    <div><span class="metric-label">Duration</span><strong>@report.Summary.ElapsedMilliseconds.ToString("0.##") ms</strong></div>
+                    <div><span class="metric-label">Steps</span><strong>@report.Summary.SucceededSteps / @report.Summary.TotalSteps</strong></div>
+                    <div><span class="metric-label">Assertions</span><strong>@report.Summary.PassedAssertions / @report.Summary.TotalAssertions</strong></div>
+                </div>
+                @foreach (var step in report.Steps)
+                {
+                    <details class="section-block">
+                        <summary><strong>@step.Status · @step.Name</strong> · HTTP @(step.StatusCode?.ToString() ?? "n/a") · @step.ElapsedMilliseconds.ToString("0.##") ms</summary>
+                        <p>Correlation: <code>@step.CorrelationId</code></p>
+                        @if (step.Request is not null)
+                        {
+                            <h4>Request</h4>
+                            <pre class="response-body">@step.Request.Method @step.Request.Url
+@string.Join(Environment.NewLine, step.Request.Headers.Select(item => $"{item.Key}: {item.Value}"))
+
+@step.Request.Body</pre>
+                        }
+                        @if (step.Response is not null)
+                        {
+                            <h4>Response</h4>
+                            <pre class="response-body">HTTP @step.Response.StatusCode
+@step.Response.Body</pre>
+                        }
+                        @foreach (var assertion in report.Assertions.Where(item => item.StepName == step.Name))
+                        {
+                            <div class="header-row">
+                                <strong>@(assertion.Passed ? "Passed" : "Failed") · @assertion.Name</strong>
+                                <span>expected @assertion.ExpectedValue · actual @assertion.ActualValue · @assertion.Message</span>
+                            </div>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(step.Error))
+                        {
+                            <div class="status-banner danger-banner">@step.ErrorCategory: @step.Error</div>
+                        }
+                    </details>
+                }
+                <div class="actions"><NavLink href="/reports" class="primary-button">Open saved reports</NavLink></div>
+            </section>
+        }
+    }
+</section>
+
+@code {
+    private string _environmentId = string.Empty;
+    private string _scenarioId = string.Empty;
+    private string _overrides = string.Empty;
+    private bool _allowProduction;
+    private bool _running;
+    private string? _error;
+    private ScenarioRunResult? _result;
+    private CancellationTokenSource? _cancellation;
+    private readonly Dictionary<string, SecretInput> _secretInputs = new(StringComparer.OrdinalIgnoreCase);
+
+    protected override void OnInitialized() => SelectDefaults();
+
+    private void SelectDefaults()
+    {
+        if (Workspace.Active?.Plugin is not { } plugin) return;
+        _environmentId = plugin.DefaultEnvironment;
+        _scenarioId = plugin.Scenarios.FirstOrDefault()?.Id ?? string.Empty;
+    }
+
+    private SecretInput GetSecret(string name)
+    {
+        if (!_secretInputs.TryGetValue(name, out var input))
+        {
+            input = new SecretInput();
+            _secretInputs[name] = input;
+        }
+        return input;
+    }
+
+    private async Task RunAsync()
+    {
+        if (Workspace.Active?.Plugin is not { } plugin) return;
+        _running = true;
+        _error = null;
+        _result = null;
+        _cancellation = new CancellationTokenSource();
+        try
+        {
+            foreach (var item in _secretInputs.Where(item => !string.IsNullOrEmpty(item.Value.Value)))
+            {
+                await SecretStore.SetSessionAsync(plugin.Id, item.Key, item.Value.Value, _cancellation.Token);
+            }
+            _result = await Runner.RunAsync(
+                new ScenarioRunRequest(
+                    new DeclarativeRunPlugin(Workspace.Active!.FilePath, plugin.Id, plugin.Version),
+                    _scenarioId,
+                    _environmentId,
+                    ParseOverrides(),
+                    _allowProduction),
+                _cancellation.Token);
+            _error = _result.Error;
+        }
+        finally
+        {
+            _running = false;
+            _cancellation.Dispose();
+            _cancellation = null;
+        }
+    }
+
+    private IReadOnlyDictionary<string, string?> ParseOverrides()
+        => _overrides.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(line => line.Split('=', 2))
+            .Where(pair => pair.Length == 2 && !string.IsNullOrWhiteSpace(pair[0]))
+            .ToDictionary(pair => pair[0], pair => (string?)pair[1], StringComparer.OrdinalIgnoreCase);
+
+    private void Cancel() => _cancellation?.Cancel();
+    private sealed class SecretInput { public string Value { get; set; } = string.Empty; }
+}

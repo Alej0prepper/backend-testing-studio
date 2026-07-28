@@ -17,7 +17,7 @@
             <span class="eyebrow">Configuration</span>
             <h2>Environments</h2>
             <p>
-                Define base URLs, variables y headers por ambiente. Todo se guarda en SQLite y se puede editar en el mismo panel.
+                Define base URLs, variables y headers por ambiente. Los secretos de autenticación solo viven en la sesión y nunca se guardan en SQLite.
             </p>
         </div>
 
@@ -216,14 +216,21 @@
 
     private async Task SaveAsync()
     {
-        var environment = _editor.ToEnvironment();
-        var saved = environment.Id == Guid.Empty
-            ? await EnvironmentService.CreateAsync(environment)
-            : await EnvironmentService.UpdateAsync(environment);
+        try
+        {
+            var environment = _editor.ToEnvironment();
+            var saved = environment.Id == Guid.Empty
+                ? await EnvironmentService.CreateAsync(environment)
+                : await EnvironmentService.UpdateAsync(environment);
 
-        _statusMessage = $"Saved '{saved.Name}'.";
-        await ReloadAsync();
-        _editor.Load(saved);
+            _statusMessage = $"Saved '{saved.Name}'.";
+            await ReloadAsync();
+            _editor.Load(saved);
+        }
+        catch (Exception exception)
+        {
+            _statusMessage = exception.Message;
+        }
     }
 
     private async Task EditAsync(Guid id)

@@ -4,5 +4,6 @@ public enum ReportExportFormat
 {
     Html,
     Markdown,
-    Json
+    Json,
+    JUnit
 }

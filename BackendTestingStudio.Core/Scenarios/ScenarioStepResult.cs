@@ -10,4 +10,8 @@ public sealed record ScenarioStepResult(
     double ElapsedMilliseconds,
     IReadOnlyList<AssertionResult> Assertions,
     IReadOnlyDictionary<string, string?> SavedVariables,
-    string? Error = null);
+    string? Error = null,
+    HttpRequestDefinition? Request = null,
+    string? CorrelationId = null,
+    string? ErrorCategory = null,
+    string? Method = null);

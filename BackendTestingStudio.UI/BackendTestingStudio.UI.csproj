@@ -1,10 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <ItemGroup>
+    <ProjectReference Include="..\BackendTestingStudio.Application\BackendTestingStudio.Application.csproj" />
+    <ProjectReference Include="..\BackendTestingStudio.Assertions\BackendTestingStudio.Assertions.csproj" />
     <ProjectReference Include="..\BackendTestingStudio.Http\BackendTestingStudio.Http.csproj" />
     <ProjectReference Include="..\BackendTestingStudio.Core\BackendTestingStudio.Core.csproj" />
     <ProjectReference Include="..\BackendTestingStudio.Storage\BackendTestingStudio.Storage.csproj" />
     <ProjectReference Include="..\BackendTestingStudio.Plugins\BackendTestingStudio.Plugins.csproj" />
+    <ProjectReference Include="..\BackendTestingStudio.Reporting\BackendTestingStudio.Reporting.csproj" />
+    <ProjectReference Include="..\BackendTestingStudio.Scenarios\BackendTestingStudio.Scenarios.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

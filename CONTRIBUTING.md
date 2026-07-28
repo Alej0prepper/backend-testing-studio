@@ -25,7 +25,7 @@ Feature rule:
 
 ## 3. How to Create a Plugin
 
-1. Create a new plugin folder following `PLUGIN_SPEC.md`.
+1. Create one self-contained `plugin.json` following `PLUGIN_SPEC.md`.
 2. Add the required manifest and content files.
 3. Define environments, variables, modules, endpoints, payloads, assertions, and scenarios.
 4. Validate the plugin against the spec before trying to execute it.
@@ -88,4 +88,3 @@ PR checklist:
 2. Reviewers should check contract compatibility second.
 3. Reviewers should check naming, clarity, and testability after that.
 4. Any rule conflict must be resolved before merge.
-

@@ -1,0 +1,9 @@
+.plugins-page {
+    display: grid;
+    gap: 20px;
+}
+
+.response-body {
+    max-height: 560px;
+    overflow: auto;
+}

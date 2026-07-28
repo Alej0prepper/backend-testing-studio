@@ -1,0 +1,730 @@
+{
+  "id": "common-store-admin-api",
+  "name": "Common Store Admin API",
+  "version": "1.0.0",
+  "schemaVersion": "1.0.0",
+  "engineVersion": "1.0.0",
+  "author": "Alejandro Alvarez",
+  "description": "Pruebas deterministas de lectura pública, autenticación, autorización negativa y CRUD con cleanup para Common Store Admin API.",
+  "defaultEnvironment": "dev",
+  "tags": [
+    "api",
+    "rest",
+    "smoke",
+    "regression",
+    "auth",
+    "negative",
+    "crud"
+  ],
+  "variables": [
+    {
+      "name": "Email",
+      "type": "string",
+      "required": true,
+      "sensitive": true,
+      "computed": false,
+      "exportable": false,
+      "description": "Correo de un usuario de prueba activo y con el email confirmado."
+    },
+    {
+      "name": "Password",
+      "type": "string",
+      "required": true,
+      "sensitive": true,
+      "computed": false,
+      "exportable": false,
+      "description": "Contraseña del usuario de prueba."
+    },
+    {
+      "name": "AccessToken",
+      "type": "string",
+      "required": false,
+      "sensitive": true,
+      "computed": true,
+      "exportable": false,
+      "description": "JWT capturado durante el login."
+    },
+    {
+      "name": "AuthenticatedUserId",
+      "type": "string",
+      "required": false,
+      "sensitive": false,
+      "computed": true,
+      "exportable": true,
+      "description": "Identificador del usuario capturado durante el login."
+    },
+    {
+      "name": "BrandId",
+      "type": "string",
+      "required": false,
+      "sensitive": false,
+      "computed": true,
+      "exportable": true,
+      "description": "Identificador de la marca temporal creada por el escenario CRUD."
+    },
+    {
+      "name": "BrandName",
+      "type": "string",
+      "defaultValue": "BTS Automated Brand",
+      "required": false,
+      "sensitive": false,
+      "computed": false,
+      "exportable": true,
+      "description": "Nombre inicial de la marca temporal."
+    },
+    {
+      "name": "UpdatedBrandName",
+      "type": "string",
+      "defaultValue": "BTS Automated Brand Updated",
+      "required": false,
+      "sensitive": false,
+      "computed": false,
+      "exportable": true,
+      "description": "Nombre actualizado de la marca temporal."
+    },
+    {
+      "name": "MissingSettingKey",
+      "type": "string",
+      "defaultValue": "bts-missing-setting-do-not-create",
+      "required": false,
+      "sensitive": false,
+      "computed": false,
+      "exportable": true,
+      "description": "Clave reservada para comprobar una respuesta 404 sin mutar datos."
+    }
+  ],
+  "environments": [
+    {
+      "id": "dev",
+      "name": "Development",
+      "baseUrl": "http://localhost:5000",
+      "level": "Development",
+      "allowedHosts": [
+        "localhost"
+      ],
+      "headers": {
+        "Accept": "application/json"
+      },
+      "variables": {},
+      "authentication": {
+        "type": "None"
+      },
+      "timeoutMilliseconds": 30000
+    }
+  ],
+  "modules": [
+    {
+      "id": "localities",
+      "name": "Localities",
+      "description": "Lecturas públicas de provincias y municipios.",
+      "basePath": "/api",
+      "tags": [
+        "smoke",
+        "localities"
+      ],
+      "defaultHeaders": {},
+      "endpoints": [
+        {
+          "id": "list-provinces",
+          "name": "List provinces",
+          "method": "GET",
+          "path": "/localilty/provinces",
+          "description": "Lista las provincias activas mediante la ruta pública documentada por el controlador.",
+          "tags": [
+            "smoke",
+            "read"
+          ],
+          "headers": {},
+          "query": {},
+          "assertions": [
+            "status-ok",
+            "content-type-json",
+            "response-success",
+            "data-present"
+          ],
+          "saveVariables": []
+        }
+      ]
+    },
+    {
+      "id": "authentication",
+      "name": "Authentication",
+      "description": "Login JWT y validación negativa de payload.",
+      "basePath": "/api",
+      "tags": [
+        "auth"
+      ],
+      "defaultHeaders": {
+        "Content-Type": "application/json"
+      },
+      "endpoints": [
+        {
+          "id": "login",
+          "name": "Login",
+          "method": "POST",
+          "path": "/auth/login",
+          "description": "Autentica un usuario activo y captura su JWT.",
+          "tags": [
+            "smoke",
+            "auth"
+          ],
+          "headers": {},
+          "query": {},
+          "payload": "login-credentials",
+          "assertions": [
+            "status-ok",
+            "content-type-json",
+            "response-success",
+            "access-token-present",
+            "user-id-present"
+          ],
+          "saveVariables": [
+            {
+              "name": "AccessToken",
+              "source": "JsonPath",
+              "path": "$.data.accessToken",
+              "required": true
+            },
+            {
+              "name": "AuthenticatedUserId",
+              "source": "JsonPath",
+              "path": "$.data.id",
+              "required": true
+            }
+          ]
+        },
+        {
+          "id": "login-invalid-payload",
+          "name": "Login with invalid payload",
+          "method": "POST",
+          "path": "/auth/login",
+          "description": "Envía un objeto vacío para verificar el 400 documentado por la validación automática.",
+          "tags": [
+            "negative",
+            "auth",
+            "validation"
+          ],
+          "headers": {},
+          "query": {},
+          "body": {},
+          "assertions": [
+            "status-bad-request",
+            "content-type-json"
+          ],
+          "saveVariables": []
+        }
+      ]
+    },
+    {
+      "id": "users",
+      "name": "Users",
+      "description": "Lectura protegida del perfil propio y verificación de acceso sin token.",
+      "basePath": "/api",
+      "tags": [
+        "auth",
+        "users"
+      ],
+      "defaultHeaders": {},
+      "endpoints": [
+        {
+          "id": "get-own-user",
+          "name": "Get own user",
+          "method": "GET",
+          "path": "/user/get-own-user",
+          "description": "Obtiene el perfil del usuario autenticado.",
+          "tags": [
+            "smoke",
+            "auth",
+            "read"
+          ],
+          "headers": {
+            "Authorization": "Bearer {{AccessToken}}"
+          },
+          "query": {},
+          "assertions": [
+            "status-ok",
+            "content-type-json",
+            "response-success",
+            "own-user-id-matches"
+          ],
+          "saveVariables": []
+        },
+        {
+          "id": "get-own-user-unauthorized",
+          "name": "Get own user without token",
+          "method": "GET",
+          "path": "/user/get-own-user",
+          "description": "Comprueba que el endpoint protegido rechaza una solicitud sin token.",
+          "tags": [
+            "negative",
+            "auth"
+          ],
+          "headers": {},
+          "query": {},
+          "assertions": [
+            "status-unauthorized"
+          ],
+          "saveVariables": []
+        }
+      ]
+    },
+    {
+      "id": "brands",
+      "name": "Brands",
+      "description": "CRUD administrativo de una marca temporal con eliminación final.",
+      "basePath": "/api",
+      "tags": [
+        "crud",
+        "brands"
+      ],
+      "defaultHeaders": {
+        "Content-Type": "application/json"
+      },
+      "endpoints": [
+        {
+          "id": "create-brand",
+          "name": "Create brand",
+          "method": "POST",
+          "path": "/brand",
+          "description": "Crea una marca temporal para el escenario CRUD.",
+          "tags": [
+            "crud",
+            "mutation"
+          ],
+          "headers": {
+            "Authorization": "Bearer {{AccessToken}}"
+          },
+          "query": {},
+          "payload": "brand-create",
+          "assertions": [
+            "status-ok",
+            "content-type-json",
+            "response-success",
+            "brand-id-present",
+            "brand-name-matches"
+          ],
+          "saveVariables": [
+            {
+              "name": "BrandId",
+              "source": "JsonPath",
+              "path": "$.data.id",
+              "required": true
+            }
+          ]
+        },
+        {
+          "id": "read-brand",
+          "name": "Read brand",
+          "method": "GET",
+          "path": "/brand/{{BrandId}}",
+          "description": "Consulta la marca temporal recién creada.",
+          "tags": [
+            "crud",
+            "read"
+          ],
+          "headers": {
+            "Authorization": "Bearer {{AccessToken}}"
+          },
+          "query": {},
+          "assertions": [
+            "status-ok",
+            "content-type-json",
+            "response-success",
+            "brand-id-matches",
+            "brand-name-matches"
+          ],
+          "saveVariables": []
+        },
+        {
+          "id": "update-brand",
+          "name": "Update brand",
+          "method": "PUT",
+          "path": "/brand/{{BrandId}}",
+          "description": "Actualiza el nombre de la marca temporal.",
+          "tags": [
+            "crud",
+            "mutation"
+          ],
+          "headers": {
+            "Authorization": "Bearer {{AccessToken}}"
+          },
+          "query": {},
+          "payload": "brand-update",
+          "assertions": [
+            "status-ok",
+            "content-type-json",
+            "response-success",
+            "brand-id-matches",
+            "brand-updated-name-matches"
+          ],
+          "saveVariables": []
+        },
+        {
+          "id": "delete-brand",
+          "name": "Delete brand",
+          "method": "DELETE",
+          "path": "/brand/{{BrandId}}",
+          "description": "Elimina la marca temporal como cleanup del escenario CRUD.",
+          "tags": [
+            "crud",
+            "mutation",
+            "destructive"
+          ],
+          "headers": {
+            "Authorization": "Bearer {{AccessToken}}"
+          },
+          "query": {},
+          "assertions": [
+            "status-ok",
+            "content-type-json",
+            "response-success",
+            "delete-confirmed"
+          ],
+          "saveVariables": []
+        }
+      ]
+    },
+    {
+      "id": "system-settings",
+      "name": "System settings",
+      "description": "Lectura autenticada para verificar un recurso inexistente.",
+      "basePath": "/api",
+      "tags": [
+        "negative",
+        "settings"
+      ],
+      "defaultHeaders": {},
+      "endpoints": [
+        {
+          "id": "get-missing-system-setting",
+          "name": "Get missing system setting",
+          "method": "GET",
+          "path": "/admin/systemsetting/{{MissingSettingKey}}",
+          "description": "Solicita una clave reservada inexistente y verifica la respuesta 404 documentada.",
+          "tags": [
+            "negative",
+            "auth",
+            "read"
+          ],
+          "headers": {
+            "Authorization": "Bearer {{AccessToken}}"
+          },
+          "query": {},
+          "assertions": [
+            "status-not-found",
+            "content-type-json",
+            "response-failure"
+          ],
+          "saveVariables": []
+        }
+      ]
+    }
+  ],
+  "payloads": [
+    {
+      "id": "login-credentials",
+      "description": "Credenciales secretas del usuario de prueba.",
+      "contentType": "application/json",
+      "content": {
+        "email": "{{Email}}",
+        "password": "{{Password}}"
+      }
+    },
+    {
+      "id": "brand-create",
+      "description": "Datos iniciales de la marca temporal.",
+      "contentType": "application/json",
+      "content": {
+        "name": "{{BrandName}}"
+      }
+    },
+    {
+      "id": "brand-update",
+      "description": "Datos actualizados de la marca temporal.",
+      "contentType": "application/json",
+      "content": {
+        "name": "{{UpdatedBrandName}}"
+      }
+    }
+  ],
+  "assertions": [
+    {
+      "id": "status-ok",
+      "type": "StatusCode",
+      "expected": 200
+    },
+    {
+      "id": "status-bad-request",
+      "type": "StatusCode",
+      "expected": 400
+    },
+    {
+      "id": "status-unauthorized",
+      "type": "StatusCode",
+      "expected": 401
+    },
+    {
+      "id": "status-not-found",
+      "type": "StatusCode",
+      "expected": 404
+    },
+    {
+      "id": "content-type-json",
+      "type": "Header",
+      "header": "Content-Type",
+      "operator": "Contains",
+      "expected": "json"
+    },
+    {
+      "id": "response-success",
+      "type": "JsonPath",
+      "path": "$.success",
+      "operator": "Equals",
+      "expected": true
+    },
+    {
+      "id": "response-failure",
+      "type": "JsonPath",
+      "path": "$.success",
+      "operator": "Equals",
+      "expected": false
+    },
+    {
+      "id": "data-present",
+      "type": "JsonPath",
+      "path": "$.data",
+      "operator": "NotNull"
+    },
+    {
+      "id": "access-token-present",
+      "type": "JsonPath",
+      "path": "$.data.accessToken",
+      "operator": "NotNull"
+    },
+    {
+      "id": "user-id-present",
+      "type": "JsonPath",
+      "path": "$.data.id",
+      "operator": "NotNull"
+    },
+    {
+      "id": "own-user-id-matches",
+      "type": "JsonPath",
+      "path": "$.data.id",
+      "operator": "Equals",
+      "expected": "{{AuthenticatedUserId}}"
+    },
+    {
+      "id": "brand-id-present",
+      "type": "JsonPath",
+      "path": "$.data.id",
+      "operator": "NotNull"
+    },
+    {
+      "id": "brand-id-matches",
+      "type": "JsonPath",
+      "path": "$.data.id",
+      "operator": "Equals",
+      "expected": "{{BrandId}}"
+    },
+    {
+      "id": "brand-name-matches",
+      "type": "JsonPath",
+      "path": "$.data.name",
+      "operator": "Equals",
+      "expected": "{{BrandName}}"
+    },
+    {
+      "id": "brand-updated-name-matches",
+      "type": "JsonPath",
+      "path": "$.data.name",
+      "operator": "Equals",
+      "expected": "{{UpdatedBrandName}}"
+    },
+    {
+      "id": "delete-confirmed",
+      "type": "JsonPath",
+      "path": "$.data",
+      "operator": "Equals",
+      "expected": true
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "public-read-smoke",
+      "name": "Public read smoke",
+      "description": "Verifica una lectura pública estable sin mutaciones.",
+      "tags": [
+        "smoke"
+      ],
+      "onFailure": "Stop",
+      "variables": {},
+      "steps": [
+        {
+          "id": "public-list-provinces",
+          "execute": "list-provinces",
+          "enabled": true,
+          "assertions": [],
+          "saveVariables": [],
+          "dependsOn": []
+        }
+      ]
+    },
+    {
+      "id": "authenticated-user-smoke",
+      "name": "Authenticated user smoke",
+      "description": "Hace login, captura el JWT y consulta el perfil del mismo usuario.",
+      "tags": [
+        "smoke",
+        "auth"
+      ],
+      "onFailure": "Stop",
+      "variables": {},
+      "steps": [
+        {
+          "id": "authenticated-user-login",
+          "execute": "login",
+          "enabled": true,
+          "assertions": [],
+          "saveVariables": [],
+          "dependsOn": []
+        },
+        {
+          "id": "authenticated-user-read",
+          "execute": "get-own-user",
+          "enabled": true,
+          "assertions": [],
+          "saveVariables": [],
+          "dependsOn": [
+            "authenticated-user-login"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "brand-crud-safe",
+      "name": "Brand CRUD with cleanup",
+      "description": "Crea, consulta, actualiza y elimina una marca temporal. Continue permite intentar el cleanup si una comprobación intermedia falla.",
+      "tags": [
+        "regression",
+        "auth",
+        "crud",
+        "destructive"
+      ],
+      "onFailure": "Continue",
+      "variables": {},
+      "steps": [
+        {
+          "id": "brand-crud-login",
+          "execute": "login",
+          "enabled": true,
+          "assertions": [],
+          "saveVariables": [],
+          "dependsOn": []
+        },
+        {
+          "id": "brand-crud-create",
+          "execute": "create-brand",
+          "enabled": true,
+          "assertions": [],
+          "saveVariables": [],
+          "dependsOn": [
+            "brand-crud-login"
+          ]
+        },
+        {
+          "id": "brand-crud-read",
+          "execute": "read-brand",
+          "enabled": true,
+          "assertions": [],
+          "saveVariables": [],
+          "dependsOn": [
+            "brand-crud-create"
+          ]
+        },
+        {
+          "id": "brand-crud-update",
+          "execute": "update-brand",
+          "enabled": true,
+          "assertions": [],
+          "saveVariables": [],
+          "dependsOn": [
+            "brand-crud-create"
+          ]
+        },
+        {
+          "id": "brand-crud-delete",
+          "execute": "delete-brand",
+          "enabled": true,
+          "assertions": [],
+          "saveVariables": [],
+          "dependsOn": [
+            "brand-crud-create"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "negative-validation-and-auth",
+      "name": "Negative validation and authentication",
+      "description": "Comprueba payload inválido y acceso protegido sin JWT.",
+      "tags": [
+        "regression",
+        "negative",
+        "auth"
+      ],
+      "onFailure": "Continue",
+      "variables": {},
+      "steps": [
+        {
+          "id": "negative-invalid-login-payload",
+          "execute": "login-invalid-payload",
+          "enabled": true,
+          "assertions": [],
+          "saveVariables": [],
+          "dependsOn": []
+        },
+        {
+          "id": "negative-unauthorized-profile",
+          "execute": "get-own-user-unauthorized",
+          "enabled": true,
+          "assertions": [],
+          "saveVariables": [],
+          "dependsOn": []
+        }
+      ]
+    },
+    {
+      "id": "authenticated-not-found",
+      "name": "Authenticated not found",
+      "description": "Hace login y verifica un 404 autenticado sin realizar mutaciones.",
+      "tags": [
+        "regression",
+        "negative",
+        "auth"
+      ],
+      "onFailure": "Stop",
+      "variables": {},
+      "steps": [
+        {
+          "id": "not-found-login",
+          "execute": "login",
+          "enabled": true,
+          "assertions": [],
+          "saveVariables": [],
+          "dependsOn": []
+        },
+        {
+          "id": "not-found-setting",
+          "execute": "get-missing-system-setting",
+          "enabled": true,
+          "assertions": [],
+          "saveVariables": [],
+          "dependsOn": [
+            "not-found-login"
+          ]
+        }
+      ]
+    }
+  ]
+}

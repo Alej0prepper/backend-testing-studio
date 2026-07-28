@@ -47,6 +47,7 @@ internal sealed class EnvironmentRepository : IEnvironmentRepository
         }.ToString();
 
         EnsureCreated();
+        RemoveLegacyPlaintextSecrets();
     }
 
     public async Task<IReadOnlyList<Core.Environments.Environment>> GetAllAsync(CancellationToken cancellationToken = default)
@@ -239,6 +240,12 @@ internal sealed class EnvironmentRepository : IEnvironmentRepository
 
         foreach (var entry in entries)
         {
+            if (IsSensitiveName(entry.item.Name))
+            {
+                throw new InvalidOperationException(
+                    $"'{entry.item.Name}' looks sensitive and cannot be persisted. Use a plugin sensitive variable and the session secret store.");
+            }
+
             await using var insertVariable = connection.CreateCommand();
             insertVariable.Transaction = transaction;
             insertVariable.CommandText = """
@@ -285,19 +292,16 @@ internal sealed class EnvironmentRepository : IEnvironmentRepository
         using var connection = CreateConnection();
         connection.Open();
 
-        using (var command = connection.CreateCommand())
+        SchemaMigrationRunner.Apply(connection, 1, "environments-base", migratedConnection =>
         {
+            using var command = migratedConnection.CreateCommand();
             command.CommandText = EnvironmentTableSql;
             command.ExecuteNonQuery();
-        }
-
-        using (var command = connection.CreateCommand())
-        {
             command.CommandText = EnvironmentVariableTableSql;
             command.ExecuteNonQuery();
-        }
+        });
 
-        EnsureAuthenticationColumns(connection);
+        SchemaMigrationRunner.Apply(connection, 2, "environment-auth-metadata", EnsureAuthenticationColumns);
     }
 
     private static void EnsureAuthenticationColumns(SqliteConnection connection)
@@ -342,18 +346,18 @@ internal sealed class EnvironmentRepository : IEnvironmentRepository
                 return;
             case EnvironmentAuthenticationBearer bearer:
                 AddParameter(command, "$authKind", nameof(EnvironmentAuthenticationKind.Bearer));
-                AddParameter(command, "$authValue1", bearer.Token);
+                AddParameter(command, "$authValue1", DBNull.Value);
                 AddParameter(command, "$authValue2", DBNull.Value);
                 return;
             case EnvironmentAuthenticationBasic basic:
                 AddParameter(command, "$authKind", nameof(EnvironmentAuthenticationKind.Basic));
                 AddParameter(command, "$authValue1", basic.UserName);
-                AddParameter(command, "$authValue2", basic.Password);
+                AddParameter(command, "$authValue2", DBNull.Value);
                 return;
             case EnvironmentAuthenticationApiKey apiKey:
                 AddParameter(command, "$authKind", nameof(EnvironmentAuthenticationKind.ApiKey));
                 AddParameter(command, "$authValue1", apiKey.HeaderName);
-                AddParameter(command, "$authValue2", apiKey.Value);
+                AddParameter(command, "$authValue2", DBNull.Value);
                 return;
             default:
                 throw new NotSupportedException($"Authentication type '{authentication.GetType().Name}' is not supported.");
@@ -387,5 +391,43 @@ internal sealed class EnvironmentRepository : IEnvironmentRepository
         parameter.ParameterName = name;
         parameter.Value = value ?? DBNull.Value;
         command.Parameters.Add(parameter);
+    }
+
+    private void RemoveLegacyPlaintextSecrets()
+    {
+        using var connection = CreateConnection();
+        connection.Open();
+        using var command = connection.CreateCommand();
+        command.CommandText =
+            """
+            UPDATE environments
+            SET auth_value1 = CASE WHEN auth_kind IN ('Basic', 'ApiKey') THEN auth_value1 ELSE NULL END,
+                auth_value2 = NULL;
+            DELETE FROM environment_variables
+            WHERE lower(name) IN ('authorization', 'proxy-authorization', 'cookie', 'set-cookie', 'x-api-key', 'api-key')
+               OR lower(name) LIKE '%password%'
+               OR lower(name) LIKE '%secret%'
+               OR lower(name) LIKE '%token'
+               OR lower(name) LIKE '%apikey'
+               OR lower(name) LIKE '%api_key';
+            """;
+        command.ExecuteNonQuery();
+        command.CommandText = "VACUUM;";
+        command.Parameters.Clear();
+        command.ExecuteNonQuery();
+    }
+
+    private static bool IsSensitiveName(string name)
+    {
+        var normalized = name.Trim().Replace("-", string.Empty, StringComparison.Ordinal)
+            .Replace("_", string.Empty, StringComparison.Ordinal);
+        return normalized.Equals("authorization", StringComparison.OrdinalIgnoreCase) ||
+               normalized.Equals("proxyauthorization", StringComparison.OrdinalIgnoreCase) ||
+               normalized.Equals("cookie", StringComparison.OrdinalIgnoreCase) ||
+               normalized.Equals("setcookie", StringComparison.OrdinalIgnoreCase) ||
+               normalized.EndsWith("password", StringComparison.OrdinalIgnoreCase) ||
+               normalized.EndsWith("secret", StringComparison.OrdinalIgnoreCase) ||
+               normalized.EndsWith("token", StringComparison.OrdinalIgnoreCase) ||
+               normalized.EndsWith("apikey", StringComparison.OrdinalIgnoreCase);
     }
 }

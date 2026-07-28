@@ -1,32 +1,13 @@
-# Swagger PetStore Plugin
+# Swagger PetStore plugin
 
-Declarative plugin for the public Swagger PetStore API.
+`plugin.json` is the complete and only executable definition. It includes a development environment and a sequential create/read/update/delete pet scenario.
 
-## Environment
+```bash
+dotnet run --project BackendTestingStudio.Cli -- validate --plugin plugins/swagger-petstore/plugin.json
+dotnet run --project BackendTestingStudio.Cli -- run \
+  --plugin plugins/swagger-petstore/plugin.json \
+  --scenario pet-crud-lifecycle \
+  --environment swagger-petstore-live
+```
 
-- Base URL: `https://petstore.swagger.io/v2`
-- API key header: `api_key`
-- Example API key: `special-key`
-
-## Endpoints
-
-- `create-pet`: `POST /pet`
-- `get-pet`: `GET /pet/{{PetId}}`
-- `update-pet`: `PUT /pet`
-- `delete-pet`: `DELETE /pet/{{PetId}}`
-
-## Scenarios
-
-- `create-and-read-pet`: creates a pet and reads it back.
-- `pet-crud-lifecycle`: creates, reads, updates, reads again, and deletes a pet.
-
-## Runtime Variables
-
-- `PetId`
-- `PetName`
-- `UpdatedPetName`
-- `PetStatus`
-- `UpdatedPetStatus`
-- `ApiKey`
-
-Swagger PetStore is a shared public sample API. Data can be changed or reset by other users.
+The public PetStore is shared and not a reliable CI target. Repository tests validate and compile this plugin without depending on the external service.

@@ -3,23 +3,130 @@
   "name": "DummyJSON",
   "version": "1.0.0",
   "schemaVersion": "1.0.0",
-  "engineVersion": "0.16.0",
+  "engineVersion": "1.0.0",
   "author": "Backend Testing Studio",
-  "description": "Declarative plugin for DummyJSON auth, products, carts and users workflows.",
+  "description": "Canonical single-file plugin for DummyJSON authentication and product workflows.",
   "defaultEnvironment": "dummyjson-live",
+  "tags": ["sample", "smoke", "commerce"],
+  "variables": [
+    { "name": "Username", "type": "string", "defaultValue": "emilys", "required": true },
+    { "name": "Password", "type": "string", "required": true, "sensitive": true, "exportable": false },
+    { "name": "ExpiresInMins", "type": "number", "defaultValue": "30" },
+    { "name": "AccessToken", "type": "string", "sensitive": true, "computed": true, "exportable": false },
+    { "name": "UserId", "type": "number", "defaultValue": "1" },
+    { "name": "ProductId", "type": "number", "defaultValue": "1" },
+    { "name": "ProductTitle", "type": "string", "defaultValue": "Backend Testing Studio Product" }
+  ],
+  "environments": [
+    {
+      "id": "dummyjson-live",
+      "name": "DummyJSON Live",
+      "baseUrl": "https://dummyjson.com",
+      "level": "Development",
+      "allowedHosts": ["dummyjson.com"],
+      "headers": { "Accept": "application/json" },
+      "variables": { "Username": "emilys", "ExpiresInMins": "30", "UserId": "1", "ProductId": "1" },
+      "authentication": { "type": "Bearer", "token": "{{AccessToken}}" },
+      "timeoutMilliseconds": 30000
+    }
+  ],
   "modules": [
-    "auth",
-    "products",
-    "carts",
-    "users"
+    {
+      "id": "auth",
+      "name": "Authentication",
+      "defaultHeaders": { "Content-Type": "application/json", "Accept": "application/json" },
+      "endpoints": [
+        {
+          "id": "login",
+          "name": "Login",
+          "method": "POST",
+          "path": "/auth/login",
+          "payload": "login-request",
+          "assertions": ["status-ok", "access-token-present"],
+          "saveVariables": [
+            { "name": "AccessToken", "source": "JsonPath", "path": "$.accessToken", "required": true },
+            { "name": "UserId", "source": "JsonPath", "path": "$.id", "required": true }
+          ]
+        },
+        {
+          "id": "get-auth-user",
+          "name": "Get authenticated user",
+          "method": "GET",
+          "path": "/auth/me",
+          "headers": { "Authorization": "Bearer {{AccessToken}}" },
+          "assertions": ["status-ok", "user-id-matches"]
+        }
+      ]
+    },
+    {
+      "id": "products",
+      "name": "Products",
+      "defaultHeaders": { "Content-Type": "application/json", "Accept": "application/json" },
+      "endpoints": [
+        {
+          "id": "get-product",
+          "name": "Get product",
+          "method": "GET",
+          "path": "/products/{{ProductId}}",
+          "assertions": ["status-ok", "product-id-matches"]
+        },
+        {
+          "id": "add-product",
+          "name": "Add product (simulated)",
+          "method": "POST",
+          "path": "/products/add",
+          "payload": "product-add",
+          "assertions": ["status-created", "product-title-matches"],
+          "saveVariables": [
+            { "name": "ProductId", "source": "JsonPath", "path": "$.id", "required": true }
+          ]
+        }
+      ]
+    }
   ],
-  "tags": [
-    "sample",
-    "dummyjson",
-    "auth",
-    "commerce",
-    "users"
+  "payloads": [
+    {
+      "id": "login-request",
+      "description": "DummyJSON login request.",
+      "contentType": "application/json",
+      "content": { "username": "{{Username}}", "password": "{{Password}}", "expiresInMins": "{{ExpiresInMins}}" }
+    },
+    {
+      "id": "product-add",
+      "description": "Simulated product creation.",
+      "contentType": "application/json",
+      "content": { "title": "{{ProductTitle}}", "price": 99 }
+    }
   ],
-  "repositoryUrl": "https://dummyjson.com",
-  "supportUrl": "https://dummyjson.com/docs"
+  "assertions": [
+    { "id": "status-ok", "type": "StatusCode", "expected": 200 },
+    { "id": "status-created", "type": "StatusCode", "expected": 201 },
+    { "id": "access-token-present", "type": "JsonPath", "path": "$.accessToken", "operator": "NotNull" },
+    { "id": "user-id-matches", "type": "JsonPath", "path": "$.id", "expected": "{{UserId}}" },
+    { "id": "product-id-matches", "type": "JsonPath", "path": "$.id", "expected": "{{ProductId}}" },
+    { "id": "product-title-matches", "type": "JsonPath", "path": "$.title", "expected": "{{ProductTitle}}" }
+  ],
+  "scenarios": [
+    {
+      "id": "login-and-auth-user",
+      "name": "Login and get auth user",
+      "description": "Capture the access token and call the protected endpoint.",
+      "tags": ["auth", "smoke"],
+      "onFailure": "Stop",
+      "steps": [
+        { "id": "login", "execute": "login" },
+        { "id": "me", "execute": "get-auth-user", "dependsOn": ["login"] }
+      ]
+    },
+    {
+      "id": "product-smoke",
+      "name": "Read and create a simulated product",
+      "tags": ["products", "smoke"],
+      "onFailure": "Stop",
+      "steps": [
+        { "id": "read", "execute": "get-product" },
+        { "id": "create", "execute": "add-product", "dependsOn": ["read"] }
+      ]
+    }
+  ]
 }

@@ -9,4 +9,21 @@ public sealed record ReportStep(
     int PassedAssertions,
     int FailedAssertions,
     IReadOnlyDictionary<string, string?> SavedVariables,
-    string? Error);
+    string? Error)
+{
+    public ReportRequestSnapshot? Request { get; init; }
+    public ReportResponseSnapshot? Response { get; init; }
+    public string? CorrelationId { get; init; }
+    public string? ErrorCategory { get; init; }
+}
+
+public sealed record ReportRequestSnapshot(
+    string Method,
+    string Url,
+    IReadOnlyDictionary<string, string?> Headers,
+    string? Body);
+
+public sealed record ReportResponseSnapshot(
+    int StatusCode,
+    IReadOnlyDictionary<string, IReadOnlyList<string>> Headers,
+    string? Body);

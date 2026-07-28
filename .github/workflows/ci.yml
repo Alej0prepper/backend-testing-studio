@@ -1,0 +1,35 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build-test-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - name: Restore
+        run: dotnet restore BackendTestingStudio.slnx
+      - name: Build
+        run: dotnet build BackendTestingStudio.slnx -c Release --no-restore
+      - name: Test
+        run: dotnet test BackendTestingStudio.slnx -c Release --no-build --no-restore --logger "trx;LogFileName=tests.trx"
+      - name: Dependency audit
+        run: dotnet list BackendTestingStudio.slnx package --vulnerable --include-transitive
+      - name: Publish test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: '**/TestResults/*.trx'
+          if-no-files-found: ignore

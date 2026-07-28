@@ -6,4 +6,5 @@ PROJECT_FILE="$ROOT_DIR/BackendTestingStudio.UI/BackendTestingStudio.UI.csproj"
 
 export ASPNETCORE_ENVIRONMENT="${ASPNETCORE_ENVIRONMENT:-Development}"
 
+cd "$ROOT_DIR"
 exec dotnet run --project "$PROJECT_FILE" "$@"

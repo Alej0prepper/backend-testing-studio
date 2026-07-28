@@ -8,10 +8,14 @@
 @using BackendTestingStudio.Core.Payloads
 @using IEnvironmentService = BackendTestingStudio.Core.Environments.IEnvironmentService
 @using BackendTestingStudio.Core.Http
+@using BackendTestingStudio.Core.Plugins
+@using BackendTestingStudio.Core.Security
 @inject IEnvironmentService EnvironmentService
 @inject IHttpEngine HttpEngine
 @inject IRequestHistoryService HistoryService
 @inject IPayloadService PayloadService
+@inject IPluginWorkspace PluginWorkspace
+@inject ISensitiveDataRedactor Redactor
 
 <PageTitle>API Explorer</PageTitle>
 
@@ -250,6 +254,9 @@
 </section>
 
 @code {
+    [SupplyParameterFromQuery(Name = "pluginEndpoint")]
+    public string? PluginEndpointId { get; set; }
+
     private readonly ExplorerRequestModel _request = new();
     private readonly ExplorerResponseModel _response = new();
     private IReadOnlyList<EnvironmentEntity> _environments = [];
@@ -262,6 +269,60 @@
         await ReloadEnvironmentsAsync();
         await ReloadPayloadsAsync();
         ResetRequest();
+        LoadPluginEndpoint();
+    }
+
+    private void LoadPluginEndpoint()
+    {
+        if (string.IsNullOrWhiteSpace(PluginEndpointId) || PluginWorkspace.Active?.Plugin is not { } plugin)
+        {
+            return;
+        }
+
+        var match = plugin.Modules.SelectMany(module => module.Endpoints.Select(endpoint => (module, endpoint)))
+            .FirstOrDefault(item => string.Equals(item.endpoint.Id, PluginEndpointId, StringComparison.OrdinalIgnoreCase));
+        if (match.endpoint is null)
+        {
+            _errorMessage = $"Plugin endpoint '{PluginEndpointId}' was not found.";
+            return;
+        }
+
+        var environment = plugin.Environments.First(item =>
+            string.Equals(item.Id, plugin.DefaultEnvironment, StringComparison.OrdinalIgnoreCase));
+        _request.Method = Enum.Parse<ExplorerMethod>(match.endpoint.Method, true);
+        _request.Url = environment.BaseUrl.TrimEnd('/') + "/" +
+            match.module.BasePath.Trim('/').Trim() +
+            (string.IsNullOrWhiteSpace(match.module.BasePath) ? string.Empty : "/") +
+            match.endpoint.Path.TrimStart('/');
+        _request.Headers.Clear();
+        foreach (var header in environment.Headers.Concat(match.module.DefaultHeaders).Concat(match.endpoint.Headers))
+        {
+            _request.Headers.Add(new NameValueEntry { Name = header.Key, Value = header.Value ?? string.Empty });
+        }
+        _request.QueryParameters.Clear();
+        foreach (var query in match.endpoint.Query)
+        {
+            _request.QueryParameters.Add(new NameValueEntry { Name = query.Key, Value = query.Value ?? string.Empty });
+        }
+
+        var payload = string.IsNullOrWhiteSpace(match.endpoint.Payload)
+            ? null
+            : plugin.Payloads.FirstOrDefault(item =>
+                string.Equals(item.Id, match.endpoint.Payload, StringComparison.OrdinalIgnoreCase));
+        if (payload is not null)
+        {
+            _request.BodyMode = ExplorerBodyMode.Json;
+            _request.JsonBody = payload.Content.GetRawText();
+        }
+        else if (match.endpoint.Body is { } body)
+        {
+            _request.BodyMode = ExplorerBodyMode.Json;
+            _request.JsonBody = body.GetRawText();
+        }
+        else
+        {
+            _request.BodyMode = ExplorerBodyMode.None;
+        }
     }
 
     private async Task ReloadEnvironmentsAsync()
@@ -386,7 +447,14 @@
             _response.ElapsedMs = stopwatch.Elapsed.TotalMilliseconds;
 
             var resolvedRequest = HttpRequestTemplateResolver.Resolve(request);
-            await HistoryService.RecordAsync(CreateHistoryEntry(selectedEnvironment, _request.Method.ToString().ToUpperInvariant(), resolvedRequest, result, stopwatch.Elapsed));
+            var secrets = GetAuthenticationSecrets(selectedEnvironment);
+            await HistoryService.RecordAsync(CreateHistoryEntry(
+                selectedEnvironment,
+                _request.Method.ToString().ToUpperInvariant(),
+                resolvedRequest,
+                result,
+                stopwatch.Elapsed,
+                secrets));
         }
         catch (Exception ex)
         {
@@ -486,12 +554,13 @@
             _ => null
         };
 
-    private static RequestHistoryEntry CreateHistoryEntry(
+    private RequestHistoryEntry CreateHistoryEntry(
         EnvironmentEntity? selectedEnvironment,
         string method,
         HttpRequestDefinition request,
         HttpResponseResult result,
-        TimeSpan elapsed)
+        TimeSpan elapsed,
+        IReadOnlyDictionary<string, string?> secrets)
         => new(
             Guid.Empty,
             DateTimeOffset.UtcNow,
@@ -500,7 +569,7 @@
             new RequestHistoryRequestSnapshot(
                 method,
                 BuildSnapshotUrl(request),
-                request.Headers,
+                request.Headers is null ? null : Redactor.RedactHeaders(request.Headers, secrets),
                 request.Body switch
                 {
                     null => RequestHistoryBodyKind.None,
@@ -510,9 +579,9 @@
                     _ => RequestHistoryBodyKind.None
                 },
                 request.Body is HttpRequestBody.Json jsonBody
-                    ? System.Text.Json.JsonSerializer.Serialize(jsonBody.Value)
+                    ? Redactor.RedactText(System.Text.Json.JsonSerializer.Serialize(jsonBody.Value), secrets)
                     : request.Body is HttpRequestBody.RawJson rawJsonBody
-                        ? rawJsonBody.Text
+                        ? Redactor.RedactText(rawJsonBody.Text, secrets)
                     : null,
                 request.Body is HttpRequestBody.Multipart multipartBody
                     ? multipartBody.Parts.Select(part => new RequestHistoryMultipartPart(
@@ -524,9 +593,27 @@
                     : []),
             new RequestHistoryResponseSnapshot(
                 result.StatusCode,
-                result.Headers,
-                result.Content),
+                result.Headers.ToDictionary(
+                    item => item.Key,
+                    item => item.Key.Equals("Set-Cookie", StringComparison.OrdinalIgnoreCase) ||
+                            item.Key.Equals("Authorization", StringComparison.OrdinalIgnoreCase)
+                        ? (IReadOnlyList<string>)["[REDACTED]"]
+                        : item.Value.Select(value => Redactor.RedactText(value, secrets) ?? string.Empty).ToArray(),
+                    StringComparer.OrdinalIgnoreCase),
+                Redactor.RedactText(result.Content, secrets)),
             elapsed.TotalMilliseconds);
+
+    private static IReadOnlyDictionary<string, string?> GetAuthenticationSecrets(EnvironmentEntity? environment)
+        => environment?.Authentication switch
+        {
+            BackendTestingStudio.Core.Environments.EnvironmentAuthenticationBearer bearer =>
+                new Dictionary<string, string?> { ["BearerToken"] = bearer.Token },
+            BackendTestingStudio.Core.Environments.EnvironmentAuthenticationBasic basic =>
+                new Dictionary<string, string?> { ["BasicPassword"] = basic.Password },
+            BackendTestingStudio.Core.Environments.EnvironmentAuthenticationApiKey apiKey =>
+                new Dictionary<string, string?> { ["ApiKey"] = apiKey.Value },
+            _ => new Dictionary<string, string?>()
+        };
 
     private static string BuildSnapshotUrl(HttpRequestDefinition request)
     {

@@ -14,7 +14,8 @@ public sealed record ScenarioStepDefinition
         IReadOnlyDictionary<string, string?>? variables = null,
         bool stopOnFailure = true,
         bool enabled = true,
-        string? description = null)
+        string? description = null,
+        string? endpointId = null)
     {
         Name = string.IsNullOrWhiteSpace(name)
             ? throw new ArgumentException("Name is required.", nameof(name))
@@ -29,6 +30,7 @@ public sealed record ScenarioStepDefinition
         StopOnFailure = stopOnFailure;
         Enabled = enabled;
         Description = string.IsNullOrWhiteSpace(description) ? null : description.Trim();
+        EndpointId = string.IsNullOrWhiteSpace(endpointId) ? null : endpointId.Trim();
     }
 
     public string Name { get; }
@@ -48,4 +50,6 @@ public sealed record ScenarioStepDefinition
     public bool Enabled { get; }
 
     public string? Description { get; }
+
+    public string? EndpointId { get; }
 }

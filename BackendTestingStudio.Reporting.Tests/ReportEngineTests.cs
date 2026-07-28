@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json;
+using System.Xml.Linq;
 using BackendTestingStudio.Core.Assertions;
 using BackendTestingStudio.Core.Http;
 using BackendTestingStudio.Core.Reporting;
@@ -70,6 +71,21 @@ public sealed class ReportEngineTests
         Assert.Equal("checkout-flow", document.RootElement.GetProperty("scenarioId").GetString());
         Assert.Equal("Failed", document.RootElement.GetProperty("summary").GetProperty("status").GetString());
         Assert.Equal(2, document.RootElement.GetProperty("steps").GetArrayLength());
+    }
+
+    [Fact]
+    public void Export_CreatesJUnitWithStableCounts()
+    {
+        var engine = new ReportEngine();
+        var report = engine.CreateReport(CreateExecution());
+
+        var xml = XDocument.Parse(engine.Export(report, ReportExportFormat.JUnit));
+        var suite = Assert.IsType<XElement>(xml.Root);
+
+        Assert.Equal("2", suite.Attribute("tests")?.Value);
+        Assert.Equal("1", suite.Attribute("failures")?.Value);
+        Assert.Equal(2, suite.Elements("testcase").Count());
+        Assert.Single(suite.Descendants("failure"));
     }
 
     private static ScenarioExecutionResult CreateExecution(string scenarioName = "Checkout flow")

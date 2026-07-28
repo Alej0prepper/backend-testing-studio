@@ -308,23 +308,16 @@ internal sealed class PayloadRepository : IPayloadRepository
         using var connection = CreateConnection();
         connection.Open();
 
-        using (var command = connection.CreateCommand())
+        SchemaMigrationRunner.Apply(connection, 10, "payload-library", migratedConnection =>
         {
+            using var command = migratedConnection.CreateCommand();
             command.CommandText = PayloadTableSql;
             command.ExecuteNonQuery();
-        }
-
-        using (var command = connection.CreateCommand())
-        {
             command.CommandText = PayloadVariableTableSql;
             command.ExecuteNonQuery();
-        }
-
-        using (var command = connection.CreateCommand())
-        {
             command.CommandText = PayloadTagTableSql;
             command.ExecuteNonQuery();
-        }
+        });
     }
 
     private static void AddParameter(SqliteCommand command, string name, object? value)

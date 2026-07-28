@@ -92,10 +92,10 @@
         new("02", "/environments", "Environments", NavLinkMatch.Prefix),
         new("03", "/api-explorer", "API Explorer", NavLinkMatch.Prefix),
         new("04", "/payloads", "Payloads", NavLinkMatch.Prefix),
-        new("05", "/scenarios", "Scenarios", NavLinkMatch.Prefix, true),
+        new("05", "/scenarios", "Scenarios", NavLinkMatch.Prefix),
         new("06", "/history", "History", NavLinkMatch.Prefix),
         new("07", "/plugins", "Plugins", NavLinkMatch.Prefix),
-        new("08", "/reports", "Reports", NavLinkMatch.Prefix, true),
+        new("08", "/reports", "Reports", NavLinkMatch.Prefix),
         new("09", "/settings", "Settings", NavLinkMatch.Prefix, true)
     ];
 
@@ -121,9 +121,9 @@
         "API Explorer" => "Compone y ejecuta requests exclusivamente mediante IHttpEngine.",
         "Payloads" => "Plantillas JSON reutilizables con variables y etiquetas.",
         "History" => "Trazabilidad completa de requests guardados en SQLite.",
-        "Plugins" => "Catalogo de extensiones descubiertas por el plugin loader.",
-        "Scenarios" => "Modulo previsto para orquestar flujos de requests.",
-        "Reports" => "Modulo previsto para consolidar ejecuciones y resultados.",
+        "Plugins" => "Contrato plugin.json activo, validacion y catalogo declarativo.",
+        "Scenarios" => "Ejecucion secuencial, variables, assertions y diagnostico por paso.",
+        "Reports" => "Runs sanitizados y exportacion JSON, HTML y JUnit.",
         "Settings" => "Configuracion global prevista para una siguiente iteracion.",
         _ => "La ruta solicitada no existe en este workspace."
     };

@@ -2,6 +2,7 @@ using System.Diagnostics;
 using BackendTestingStudio.Core.Assertions;
 using BackendTestingStudio.Core.Http;
 using BackendTestingStudio.Core.Scenarios;
+using Microsoft.Extensions.Logging;
 
 namespace BackendTestingStudio.Scenarios.Scenarios;
 
@@ -9,11 +10,16 @@ public sealed class ScenarioEngine : IScenarioEngine
 {
     private readonly IHttpEngine _httpEngine;
     private readonly IAssertionEngine _assertionEngine;
+    private readonly ILogger<ScenarioEngine>? _logger;
 
-    public ScenarioEngine(IHttpEngine httpEngine, IAssertionEngine assertionEngine)
+    public ScenarioEngine(
+        IHttpEngine httpEngine,
+        IAssertionEngine assertionEngine,
+        ILogger<ScenarioEngine>? logger = null)
     {
         _httpEngine = httpEngine ?? throw new ArgumentNullException(nameof(httpEngine));
         _assertionEngine = assertionEngine ?? throw new ArgumentNullException(nameof(assertionEngine));
+        _logger = logger;
     }
 
     public async Task<ScenarioExecutionResult> ExecuteAsync(
@@ -26,6 +32,9 @@ public sealed class ScenarioEngine : IScenarioEngine
         var startedAt = DateTimeOffset.UtcNow;
         var scenarioStopwatch = Stopwatch.StartNew();
         var runtimeVariables = CreateRuntimeVariables(scenario.Variables, variables);
+        var executionOverrides = variables is null
+            ? new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
+            : new Dictionary<string, string?>(variables, StringComparer.OrdinalIgnoreCase);
         var stepResults = new List<ScenarioStepResult>(scenario.Steps.Count);
         var stoppedEarly = false;
 
@@ -39,14 +48,17 @@ public sealed class ScenarioEngine : IScenarioEngine
                 continue;
             }
 
-            var result = await ExecuteStepAsync(step, runtimeVariables, cancellationToken).ConfigureAwait(false);
+            var result = await ExecuteStepAsync(step, runtimeVariables, executionOverrides, cancellationToken).ConfigureAwait(false);
             stepResults.Add(result);
 
             if (result.Status is ScenarioStepStatus.Succeeded)
             {
                 foreach (var variable in result.SavedVariables)
                 {
-                    runtimeVariables[variable.Key] = variable.Value;
+                    if (!executionOverrides.ContainsKey(variable.Key))
+                    {
+                        runtimeVariables[variable.Key] = variable.Value;
+                    }
                 }
             }
             else if (step.StopOnFailure)
@@ -75,13 +87,24 @@ public sealed class ScenarioEngine : IScenarioEngine
     private async Task<ScenarioStepResult> ExecuteStepAsync(
         ScenarioStepDefinition step,
         Dictionary<string, string?> runtimeVariables,
+        IReadOnlyDictionary<string, string?> executionOverrides,
         CancellationToken cancellationToken)
     {
         var stopwatch = Stopwatch.StartNew();
 
         try
         {
-            var request = ResolveRequest(step, runtimeVariables);
+            var correlationId = Guid.NewGuid().ToString("N");
+            using var logScope = _logger?.BeginScope(new Dictionary<string, object?>
+            {
+                ["EndpointId"] = step.EndpointId,
+                ["CorrelationId"] = correlationId
+            });
+            var request = ResolveRequest(step, runtimeVariables, executionOverrides, correlationId);
+            _logger?.LogInformation(
+                "Executing endpoint {EndpointId} with correlation {CorrelationId}.",
+                step.EndpointId,
+                correlationId);
             var response = await SendAsync(step.Method, request, cancellationToken).ConfigureAwait(false);
             stopwatch.Stop();
 
@@ -103,7 +126,11 @@ public sealed class ScenarioEngine : IScenarioEngine
                     stopwatch.Elapsed.TotalMilliseconds,
                     assertions,
                     EmptyVariables(),
-                    "One or more assertions failed.");
+                    "One or more assertions failed.",
+                    request,
+                    correlationId,
+                    "Assertion",
+                    step.Method.ToString().ToUpperInvariant());
             }
 
             var captures = CaptureVariables(step.SaveVariables, response, request.Variables);
@@ -116,16 +143,27 @@ public sealed class ScenarioEngine : IScenarioEngine
                     stopwatch.Elapsed.TotalMilliseconds,
                     assertions,
                     EmptyVariables(),
-                    captures.Error);
+                    captures.Error,
+                    request,
+                    correlationId,
+                    "Capture",
+                    step.Method.ToString().ToUpperInvariant());
             }
 
+            _logger?.LogInformation(
+                "Endpoint {EndpointId} completed with HTTP {StatusCode}.",
+                step.EndpointId,
+                (int)response.StatusCode);
             return new ScenarioStepResult(
                 step.Name,
                 ScenarioStepStatus.Succeeded,
                 response,
                 stopwatch.Elapsed.TotalMilliseconds,
                 assertions,
-                captures.Values);
+                captures.Values,
+                Request: request,
+                CorrelationId: correlationId,
+                Method: step.Method.ToString().ToUpperInvariant());
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -134,6 +172,10 @@ public sealed class ScenarioEngine : IScenarioEngine
         catch (Exception ex)
         {
             stopwatch.Stop();
+            _logger?.LogWarning(
+                "Endpoint {EndpointId} failed in category {ErrorCategory}.",
+                step.EndpointId,
+                ClassifyError(ex));
             return new ScenarioStepResult(
                 step.Name,
                 ScenarioStepStatus.Failed,
@@ -141,23 +183,47 @@ public sealed class ScenarioEngine : IScenarioEngine
                 stopwatch.Elapsed.TotalMilliseconds,
                 [],
                 EmptyVariables(),
-                ex.Message);
+                ex.Message,
+                ErrorCategory: ClassifyError(ex),
+                Method: step.Method.ToString().ToUpperInvariant());
         }
     }
 
+    private static string ClassifyError(Exception exception)
+        => exception switch
+        {
+            TimeoutException => "Timeout",
+            HttpRequestException { HttpRequestError: HttpRequestError.NameResolutionError } => "Dns",
+            HttpRequestException { HttpRequestError: HttpRequestError.SecureConnectionError } => "Tls",
+            HttpRequestException { HttpRequestError: HttpRequestError.ConnectionError } => "Connection",
+            System.Text.Json.JsonException => "Parsing",
+            InvalidOperationException => "Configuration",
+            _ => "Execution"
+        };
+
     private static HttpRequestDefinition ResolveRequest(
         ScenarioStepDefinition step,
-        IReadOnlyDictionary<string, string?> runtimeVariables)
+        IReadOnlyDictionary<string, string?> runtimeVariables,
+        IReadOnlyDictionary<string, string?> executionOverrides,
+        string correlationId)
     {
         var merged = CreateRuntimeVariables(runtimeVariables, step.Request.Variables);
         foreach (var variable in step.Variables)
         {
             merged[variable.Key] = variable.Value;
         }
+        foreach (var variable in executionOverrides)
+        {
+            merged[variable.Key] = variable.Value;
+        }
 
+        var headers = step.Request.Headers is null
+            ? new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
+            : new Dictionary<string, string?>(step.Request.Headers, StringComparer.OrdinalIgnoreCase);
+        headers.TryAdd("X-BTS-Correlation-Id", correlationId);
         var request = new HttpRequestDefinition(
             step.Request.Url,
-            step.Request.Headers,
+            headers,
             step.Request.QueryParameters,
             step.Request.Body,
             step.Request.Authentication,

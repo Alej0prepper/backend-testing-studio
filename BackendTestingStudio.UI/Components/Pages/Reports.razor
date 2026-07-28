@@ -1,0 +1,46 @@
+@page "/reports"
+@using System.Text.Json
+@using BackendTestingStudio.Core.Reporting
+@using BackendTestingStudio.Core.Runs
+@inject IScenarioRunRepository Runs
+@inject IReportEngine ReportEngine
+
+<PageTitle>Reports</PageTitle>
+
+<section class="plugins-page">
+    <header class="hero card">
+        <div><span class="eyebrow">Sanitized run history</span><h2>Reports</h2><p>Consulta ejecuciones persistidas y exporta la misma evidencia lógica.</p></div>
+        <div class="hero-metrics"><div class="metric"><span class="metric-label">Runs</span><strong>@_runs.Count</strong></div></div>
+    </header>
+    <section class="card panel">
+        <div class="header-list">
+            @foreach (var run in _runs)
+            {
+                <div class="header-row">
+                    <strong>@run.Status · @run.ScenarioName</strong>
+                    <span>@run.CreatedAt.ToLocalTime() · @run.PluginId @run.PluginVersion · <button type="button" class="ghost-button" @onclick="() => Select(run)">Details</button></span>
+                </div>
+            }
+        </div>
+    </section>
+    @if (_selectedReport is not null)
+    {
+        <section class="card panel">
+            <div class="panel-header"><h3>@_selectedReport.ScenarioName</h3><span class="count-pill">@_selectedReport.Summary.Status</span></div>
+            <div class="actions">
+                <a class="ghost-button" download="report.json" href="@DataUrl(ReportExportFormat.Json)">JSON</a>
+                <a class="ghost-button" download="report.html" href="@DataUrl(ReportExportFormat.Html)">HTML</a>
+                <a class="ghost-button" download="report.xml" href="@DataUrl(ReportExportFormat.JUnit)">JUnit</a>
+            </div>
+            <pre class="response-body">@ReportEngine.Export(_selectedReport, ReportExportFormat.Json)</pre>
+        </section>
+    }
+</section>
+
+@code {
+    private IReadOnlyList<StoredScenarioRun> _runs = [];
+    private ExecutionReport? _selectedReport;
+    protected override async Task OnInitializedAsync() => _runs = await Runs.GetAllAsync();
+    private void Select(StoredScenarioRun run) => _selectedReport = JsonSerializer.Deserialize<ExecutionReport>(run.ReportJson, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+    private string DataUrl(ReportExportFormat format) => $"data:text/plain;charset=utf-8,{Uri.EscapeDataString(ReportEngine.Export(_selectedReport!, format))}";
+}

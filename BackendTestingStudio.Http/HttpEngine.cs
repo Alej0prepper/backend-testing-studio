@@ -105,11 +105,11 @@ public sealed class HttpEngine : IHttpEngine
                 requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", bearer.Token);
                 return;
             case HttpAuthentication.Basic basic:
-            {
-                var token = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{basic.UserName}:{basic.Password}"));
-                requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Basic", token);
-                return;
-            }
+                {
+                    var token = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{basic.UserName}:{basic.Password}"));
+                    requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Basic", token);
+                    return;
+                }
             case HttpAuthentication.ApiKey apiKey:
                 requestMessage.Headers.TryAddWithoutValidation(apiKey.HeaderName, apiKey.Value);
                 return;
@@ -125,42 +125,42 @@ public sealed class HttpEngine : IHttpEngine
             case null:
                 return;
             case HttpRequestBody.Json json:
-            {
-                var jsonText = JsonSerializer.Serialize(json.Value, JsonOptions);
-                var content = new StringContent(jsonText, Encoding.UTF8, json.ContentType ?? "application/json");
-                requestMessage.Content = content;
-                return;
-            }
-            case HttpRequestBody.RawJson rawJson:
-            {
-                var content = new StringContent(rawJson.Text, Encoding.UTF8, rawJson.ContentType ?? "application/json");
-                requestMessage.Content = content;
-                return;
-            }
-            case HttpRequestBody.Multipart multipart:
-            {
-                var content = new MultipartFormDataContent();
-                foreach (var part in multipart.Parts)
                 {
-                    var partContent = new ByteArrayContent(part.Content);
-                    if (!string.IsNullOrWhiteSpace(part.ContentType))
-                    {
-                        partContent.Headers.ContentType = MediaTypeHeaderValue.Parse(part.ContentType);
-                    }
-
-                    if (string.IsNullOrWhiteSpace(part.FileName))
-                    {
-                        content.Add(partContent, part.Name);
-                    }
-                    else
-                    {
-                        content.Add(partContent, part.Name, part.FileName);
-                    }
+                    var jsonText = JsonSerializer.Serialize(json.Value, JsonOptions);
+                    var content = new StringContent(jsonText, Encoding.UTF8, json.ContentType ?? "application/json");
+                    requestMessage.Content = content;
+                    return;
                 }
+            case HttpRequestBody.RawJson rawJson:
+                {
+                    var content = new StringContent(rawJson.Text, Encoding.UTF8, rawJson.ContentType ?? "application/json");
+                    requestMessage.Content = content;
+                    return;
+                }
+            case HttpRequestBody.Multipart multipart:
+                {
+                    var content = new MultipartFormDataContent();
+                    foreach (var part in multipart.Parts)
+                    {
+                        var partContent = new ByteArrayContent(part.Content);
+                        if (!string.IsNullOrWhiteSpace(part.ContentType))
+                        {
+                            partContent.Headers.ContentType = MediaTypeHeaderValue.Parse(part.ContentType);
+                        }
 
-                requestMessage.Content = content;
-                return;
-            }
+                        if (string.IsNullOrWhiteSpace(part.FileName))
+                        {
+                            content.Add(partContent, part.Name);
+                        }
+                        else
+                        {
+                            content.Add(partContent, part.Name, part.FileName);
+                        }
+                    }
+
+                    requestMessage.Content = content;
+                    return;
+                }
             default:
                 throw new NotSupportedException($"Body type '{body.GetType().Name}' is not supported.");
         }

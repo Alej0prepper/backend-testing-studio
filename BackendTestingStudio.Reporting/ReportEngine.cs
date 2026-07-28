@@ -2,6 +2,8 @@ using System.Net;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
+using System.Xml.Linq;
+using BackendTestingStudio.Core.Http;
 using BackendTestingStudio.Core.Reporting;
 using BackendTestingStudio.Core.Scenarios;
 
@@ -71,12 +73,14 @@ public sealed class ReportEngine : IReportEngine
             ReportExportFormat.Html => ExportHtml(report),
             ReportExportFormat.Markdown => ExportMarkdown(report),
             ReportExportFormat.Json => JsonSerializer.Serialize(report, JsonOptions),
+            ReportExportFormat.JUnit => ExportJUnit(report),
             _ => throw new NotSupportedException($"Report export format '{format}' is not supported.")
         };
     }
 
     private static ReportStep CreateStep(ScenarioStepResult step)
-        => new(
+    {
+        var reportStep = new ReportStep(
             step.Name,
             step.Status.ToString(),
             ToStatusCode(step.Response?.StatusCode),
@@ -86,6 +90,45 @@ public sealed class ReportEngine : IReportEngine
             step.Assertions.Count(assertion => !assertion.Passed),
             step.SavedVariables,
             step.Error);
+        return reportStep with
+        {
+            CorrelationId = step.CorrelationId,
+            ErrorCategory = step.ErrorCategory,
+            Request = step.Request is null ? null : CreateRequestSnapshot(step.Method ?? string.Empty, step.Request),
+            Response = step.Response is null
+                ? null
+                : new ReportResponseSnapshot(
+                    (int)step.Response.StatusCode,
+                    step.Response.Headers,
+                    step.Response.Content)
+        };
+    }
+
+    private static ReportRequestSnapshot CreateRequestSnapshot(string method, HttpRequestDefinition request)
+        => new(
+            method,
+            BuildUrl(request),
+            request.Headers ?? new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase),
+            request.Body switch
+            {
+                HttpRequestBody.RawJson raw => raw.Text,
+                HttpRequestBody.Json json => JsonSerializer.Serialize(json.Value, JsonOptions),
+                HttpRequestBody.Multipart => "[multipart body]",
+                _ => null
+            });
+
+    private static string BuildUrl(HttpRequestDefinition request)
+    {
+        if (request.QueryParameters is null || request.QueryParameters.Count == 0)
+        {
+            return request.Url.OriginalString;
+        }
+
+        var separator = request.Url.OriginalString.Contains('?', StringComparison.Ordinal) ? "&" : "?";
+        var query = string.Join("&", request.QueryParameters.Select(item =>
+            $"{Uri.EscapeDataString(item.Key)}={Uri.EscapeDataString(item.Value ?? string.Empty)}"));
+        return request.Url.OriginalString + separator + query;
+    }
 
     private static int? ToStatusCode(HttpStatusCode? statusCode)
         => statusCode is null ? null : (int)statusCode.Value;
@@ -195,6 +238,22 @@ public sealed class ReportEngine : IReportEngine
         }
 
         builder.AppendLine("</tbody></table>");
+        builder.AppendLine("<h2>Evidence</h2>");
+        foreach (var step in report.Steps)
+        {
+            builder.AppendLine($"<details><summary>{Html(step.Status)} · {Html(step.Name)} · correlation <code>{Html(step.CorrelationId ?? "n/a")}</code></summary>");
+            if (step.Request is not null)
+            {
+                builder.AppendLine("<h3>Request</h3>");
+                builder.AppendLine($"<pre>{Html(step.Request.Method)} {Html(step.Request.Url)}\n{Html(string.Join(Environment.NewLine, step.Request.Headers.Select(item => $"{item.Key}: {item.Value}")))}\n\n{Html(step.Request.Body ?? string.Empty)}</pre>");
+            }
+            if (step.Response is not null)
+            {
+                builder.AppendLine("<h3>Response</h3>");
+                builder.AppendLine($"<pre>HTTP {step.Response.StatusCode}\n{Html(string.Join(Environment.NewLine, step.Response.Headers.Select(item => $"{item.Key}: {string.Join(", ", item.Value)}")))}\n\n{Html(step.Response.Body ?? string.Empty)}</pre>");
+            }
+            builder.AppendLine("</details>");
+        }
         builder.AppendLine("<h2>Assertions</h2>");
         builder.AppendLine("<table><thead><tr><th>Step</th><th>Assertion</th><th>Result</th><th>Expected</th><th>Actual</th><th>Message</th></tr></thead><tbody>");
 
@@ -234,6 +293,45 @@ public sealed class ReportEngine : IReportEngine
         builder.AppendLine("</body>");
         builder.AppendLine("</html>");
         return builder.ToString();
+    }
+
+    private static string ExportJUnit(ExecutionReport report)
+    {
+        var suite = new XElement(
+            "testsuite",
+            new XAttribute("name", report.ScenarioName),
+            new XAttribute("tests", report.Steps.Count),
+            new XAttribute("failures", report.Summary.FailedSteps),
+            new XAttribute("errors", report.Errors.Count(error =>
+                !string.Equals(error.Message, "One or more assertions failed.", StringComparison.Ordinal))),
+            new XAttribute("time", (report.Summary.ElapsedMilliseconds / 1000d).ToString("0.###", System.Globalization.CultureInfo.InvariantCulture)));
+
+        foreach (var step in report.Steps)
+        {
+            var testCase = new XElement(
+                "testcase",
+                new XAttribute("classname", report.ScenarioId),
+                new XAttribute("name", step.Name),
+                new XAttribute("time", (step.ElapsedMilliseconds / 1000d).ToString("0.###", System.Globalization.CultureInfo.InvariantCulture)));
+
+            if (string.Equals(step.Status, ScenarioStepStatus.Skipped.ToString(), StringComparison.Ordinal))
+            {
+                testCase.Add(new XElement("skipped"));
+            }
+            else if (string.Equals(step.Status, ScenarioStepStatus.Failed.ToString(), StringComparison.Ordinal))
+            {
+                testCase.Add(new XElement(
+                    "failure",
+                    new XAttribute("message", step.Error ?? "Step failed."),
+                    string.Join(Environment.NewLine, report.Assertions
+                        .Where(item => item.StepName == step.Name && !item.Passed)
+                        .Select(item => $"{item.Name}: expected={item.ExpectedValue}, actual={item.ActualValue}. {item.Message}"))));
+            }
+
+            suite.Add(testCase);
+        }
+
+        return new XDocument(new XDeclaration("1.0", "utf-8", null), suite).ToString();
     }
 
     private static string Html(string value)

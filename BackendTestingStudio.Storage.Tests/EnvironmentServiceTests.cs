@@ -77,4 +77,35 @@ public sealed class EnvironmentServiceTests
             File.Delete(databasePath);
         }
     }
+
+    [Fact]
+    public async Task SensitiveNamedVariable_IsRejectedBeforePersistence()
+    {
+        var databasePath = Path.Combine(Path.GetTempPath(), $"bts-secret-{Guid.NewGuid():N}.db");
+        try
+        {
+            var services = new ServiceCollection();
+            services.AddBackendTestingStudioStorage(databasePath);
+            await using var provider = services.BuildServiceProvider();
+            var service = provider.GetRequiredService<IEnvironmentService>();
+
+            var error = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                service.CreateAsync(new EnvironmentEntity(
+                    Guid.Empty,
+                    "Unsafe",
+                    "https://localhost:5001",
+                    [new EnvironmentVariableEntity(Guid.Empty, "AccessToken", "must-not-persist")],
+                    [])));
+
+            Assert.Contains("session secret store", error.Message);
+            Assert.DoesNotContain("must-not-persist", System.Text.Encoding.UTF8.GetString(await File.ReadAllBytesAsync(databasePath)));
+        }
+        finally
+        {
+            if (File.Exists(databasePath))
+            {
+                File.Delete(databasePath);
+            }
+        }
+    }
 }

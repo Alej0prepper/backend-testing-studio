@@ -202,8 +202,11 @@ internal sealed class RequestHistoryRepository : IRequestHistoryRepository
         using var connection = CreateConnection();
         connection.Open();
 
-        using var command = connection.CreateCommand();
-        command.CommandText = RequestHistoryTableSql;
-        command.ExecuteNonQuery();
+        SchemaMigrationRunner.Apply(connection, 20, "request-history", migratedConnection =>
+        {
+            using var command = migratedConnection.CreateCommand();
+            command.CommandText = RequestHistoryTableSql;
+            command.ExecuteNonQuery();
+        });
     }
 }

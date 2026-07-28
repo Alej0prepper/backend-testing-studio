@@ -37,11 +37,11 @@ These rules are mandatory. If any future decision conflicts with them, these rul
 
 ## 5. Plugin Rules
 
-1. Plugins are discovered from folders.
+1. Plugins are opened from one explicitly selected `plugin.json`.
 2. Plugins are validated before activation.
 3. A plugin that fails validation must not be executed.
-4. A plugin manifest must be the canonical identity of that plugin.
-5. Plugin metadata must not be inferred from folder names alone.
+4. The selected `plugin.json` is the only source of truth and canonical identity.
+5. Plugin metadata must not be inferred from file or folder names.
 6. Plugin compatibility must be checked before the UI exposes execution actions.
 7. If a manifest, scenario, payload, or assertion is invalid, the engine must report the validation error clearly.
 8. The engine must not silently ignore unknown required fields.
@@ -115,4 +115,3 @@ These rules are mandatory. If any future decision conflicts with them, these rul
 2. If a plugin field changes, `PLUGIN_SPEC.md` must be updated in the same change.
 3. If a coding convention changes, `CODING_STANDARDS.md` must be updated in the same change.
 4. If onboarding changes, `CONTRIBUTING.md` must be updated in the same change.
-

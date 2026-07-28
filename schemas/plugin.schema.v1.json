@@ -1,0 +1,220 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://backend-testing-studio.local/schemas/plugin.schema.v1.json",
+  "title": "Backend Testing Studio plugin 1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id", "name", "version", "schemaVersion", "engineVersion", "author",
+    "description", "defaultEnvironment", "variables", "environments", "modules",
+    "payloads", "assertions", "scenarios"
+  ],
+  "properties": {
+    "id": { "$ref": "#/$defs/id" },
+    "name": { "type": "string", "minLength": 1 },
+    "version": { "$ref": "#/$defs/version" },
+    "schemaVersion": { "const": "1.0.0" },
+    "engineVersion": { "$ref": "#/$defs/version" },
+    "author": { "type": "string", "minLength": 1 },
+    "description": { "type": "string", "minLength": 1 },
+    "defaultEnvironment": { "$ref": "#/$defs/id" },
+    "tags": { "$ref": "#/$defs/stringArray" },
+    "variables": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/variable" }
+    },
+    "environments": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/environment" }
+    },
+    "modules": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/module" }
+    },
+    "payloads": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/payload" }
+    },
+    "assertions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/assertion" }
+    },
+    "scenarios": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/scenario" }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "stringArray": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "stringMap": {
+      "type": "object",
+      "additionalProperties": { "type": ["string", "null"] }
+    },
+    "variable": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$" },
+        "type": { "enum": ["string", "number", "boolean", "json"] },
+        "defaultValue": { "type": ["string", "null"] },
+        "required": { "type": "boolean" },
+        "sensitive": { "type": "boolean" },
+        "computed": { "type": "boolean" },
+        "exportable": { "type": "boolean" },
+        "description": { "type": ["string", "null"] }
+      }
+    },
+    "authentication": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": { "enum": ["None", "Bearer", "Basic", "ApiKey"] },
+        "token": { "type": ["string", "null"] },
+        "username": { "type": ["string", "null"] },
+        "password": { "type": ["string", "null"] },
+        "headerName": { "type": ["string", "null"] },
+        "value": { "type": ["string", "null"] }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "baseUrl", "allowedHosts"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "name": { "type": "string", "minLength": 1 },
+        "baseUrl": { "type": "string", "format": "uri", "pattern": "^https?://" },
+        "level": { "enum": ["Development", "Staging", "Production"] },
+        "allowedHosts": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "headers": { "$ref": "#/$defs/stringMap" },
+        "variables": { "$ref": "#/$defs/stringMap" },
+        "authentication": { "$ref": "#/$defs/authentication" },
+        "timeoutMilliseconds": { "type": "integer", "minimum": 1, "maximum": 600000 }
+      }
+    },
+    "capture": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "source"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "source": { "enum": ["JsonPath", "Header", "StatusCode", "Body"] },
+        "path": { "type": ["string", "null"] },
+        "required": { "type": "boolean" }
+      }
+    },
+    "endpoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "method", "path"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "name": { "type": "string", "minLength": 1 },
+        "method": { "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"] },
+        "path": { "type": "string", "minLength": 1 },
+        "description": { "type": ["string", "null"] },
+        "tags": { "$ref": "#/$defs/stringArray" },
+        "headers": { "$ref": "#/$defs/stringMap" },
+        "query": { "$ref": "#/$defs/stringMap" },
+        "payload": { "type": ["string", "null"] },
+        "body": {},
+        "assertions": { "$ref": "#/$defs/stringArray" },
+        "saveVariables": { "type": "array", "items": { "$ref": "#/$defs/capture" } },
+        "timeoutMilliseconds": { "type": ["integer", "null"], "minimum": 1, "maximum": 600000 }
+      }
+    },
+    "module": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "endpoints"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "name": { "type": "string", "minLength": 1 },
+        "description": { "type": ["string", "null"] },
+        "basePath": { "type": "string" },
+        "tags": { "$ref": "#/$defs/stringArray" },
+        "defaultHeaders": { "$ref": "#/$defs/stringMap" },
+        "endpoints": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/endpoint" } }
+      }
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "content"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "description": { "type": ["string", "null"] },
+        "contentType": { "type": "string", "minLength": 1 },
+        "content": {}
+      }
+    },
+    "assertion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "type": { "enum": ["StatusCode", "Header", "JsonPath", "MaxTime"] },
+        "operator": { "enum": ["Equals", "Contains", "Null", "NotNull", "MaxTime"] },
+        "path": { "type": ["string", "null"] },
+        "header": { "type": ["string", "null"] },
+        "expected": {},
+        "maximumMilliseconds": { "type": ["number", "null"], "minimum": 0 },
+        "message": { "type": ["string", "null"] }
+      }
+    },
+    "step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["execute"],
+      "properties": {
+        "id": { "type": ["string", "null"] },
+        "execute": { "$ref": "#/$defs/id" },
+        "name": { "type": ["string", "null"] },
+        "description": { "type": ["string", "null"] },
+        "enabled": { "type": "boolean" },
+        "stopOnFailure": { "type": ["boolean", "null"] },
+        "with": { "$ref": "#/$defs/stringMap" },
+        "assertions": { "$ref": "#/$defs/stringArray" },
+        "saveVariables": { "type": "array", "items": { "$ref": "#/$defs/capture" } },
+        "dependsOn": { "$ref": "#/$defs/stringArray" }
+      }
+    },
+    "scenario": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "steps"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "name": { "type": "string", "minLength": 1 },
+        "description": { "type": ["string", "null"] },
+        "tags": { "$ref": "#/$defs/stringArray" },
+        "onFailure": { "enum": ["Stop", "Continue"] },
+        "variables": { "$ref": "#/$defs/stringMap" },
+        "steps": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/step" } }
+      }
+    }
+  }
+}

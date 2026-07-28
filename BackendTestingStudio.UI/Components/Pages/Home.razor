@@ -6,7 +6,7 @@
 @inject IEnvironmentService EnvironmentService
 @inject IRequestHistoryService HistoryService
 @inject IPayloadService PayloadService
-@inject IPluginLoader PluginLoader
+@inject IPluginWorkspace PluginWorkspace
 
 <PageTitle>Dashboard · Backend Testing Studio</PageTitle>
 
@@ -61,8 +61,8 @@
         <NavLink href="/plugins" class="stat-card card">
             <span class="stat-code">EXT</span>
             <strong>@(_isLoading ? "--" : _pluginCount)</strong>
-            <span>Plugins detectados</span>
-            <small>Catalogo instalado</small>
+            <span>Plugin activo</span>
+            <small>Contrato plugin.json validado</small>
         </NavLink>
     </section>
 
@@ -101,7 +101,7 @@
                 <div><span class="engine-dot"></span><strong>HTTP</strong><small>5 metodos + auth</small></div>
                 <div><span class="engine-dot"></span><strong>Variables</strong><small>{{Token}} en runtime</small></div>
                 <div><span class="engine-dot"></span><strong>Assertions</strong><small>8 validaciones</small></div>
-                <div><span class="engine-dot"></span><strong>Plugin loader</strong><small>Descubrimiento por DI</small></div>
+                <div><span class="engine-dot"></span><strong>Plugin loader</strong><small>JSON único + validación</small></div>
             </div>
         </article>
     </section>
@@ -125,7 +125,7 @@
             }
         </div>
         <p class="coverage-note">
-            Scenarios, Reports y Settings permanecen visibles como modulos planificados; no se presentan como funcionalidades terminadas.
+            Scenarios y Reports comparten el runner con la CLI; Settings permanece como módulo planificado.
         </p>
     </section>
 </section>
@@ -141,7 +141,7 @@
         new("06", "History", "Guardar y repetir"),
         new("07", "Authentication", "Bearer, Basic, ApiKey"),
         new("08", "Plugin model", "Contrato comun"),
-        new("09", "Plugin loader", "Descubrimiento"),
+        new("09", "Plugin loader", "JSON declarativo"),
         new("10", "Payloads", "Biblioteca JSON"),
         new("11", "Variables", "Resolucion runtime"),
         new("12", "Assertions", "Motor desacoplado")
@@ -161,14 +161,12 @@
             var environmentsTask = EnvironmentService.GetAllAsync();
             var historyTask = HistoryService.GetAllAsync();
             var payloadsTask = PayloadService.GetAllAsync();
-            var pluginsTask = PluginLoader.GetInstalledAsync();
-
-            await Task.WhenAll(environmentsTask, historyTask, payloadsTask, pluginsTask);
+            await Task.WhenAll(environmentsTask, historyTask, payloadsTask);
 
             _environmentCount = environmentsTask.Result.Count;
             _historyCount = historyTask.Result.Count;
             _payloadCount = payloadsTask.Result.Count;
-            _pluginCount = pluginsTask.Result.Count;
+            _pluginCount = PluginWorkspace.Active?.IsValid == true ? 1 : 0;
         }
         catch (Exception ex)
         {

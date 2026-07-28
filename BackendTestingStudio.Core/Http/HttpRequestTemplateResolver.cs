@@ -14,7 +14,7 @@ public static class HttpRequestTemplateResolver
 
         var variables = request.Variables;
         return new HttpRequestDefinition(
-            new Uri(ResolveText(request.Url.ToString(), variables), UriKind.Absolute),
+            new Uri(ResolveText(request.Url.OriginalString, variables), UriKind.Absolute),
             ResolveDictionary(request.Headers, variables),
             ResolveDictionary(request.QueryParameters, variables),
             ResolveBody(request.Body, variables),
@@ -24,16 +24,27 @@ public static class HttpRequestTemplateResolver
 
     public static string ResolveText(string? value, IReadOnlyDictionary<string, string?>? variables)
     {
-        if (string.IsNullOrEmpty(value) || variables is null || variables.Count == 0)
+        if (string.IsNullOrEmpty(value))
         {
             return value ?? string.Empty;
         }
 
-        return TemplatePattern.Replace(value, match =>
+        var resolved = TemplatePattern.Replace(value, match =>
         {
             var key = match.Groups["name"].Value;
-            return variables.TryGetValue(key, out var replacement) ? replacement ?? string.Empty : match.Value;
+            return variables is not null && variables.TryGetValue(key, out var replacement)
+                ? replacement ?? string.Empty
+                : match.Value;
         });
+
+        var unresolved = TemplatePattern.Match(resolved);
+        if (unresolved.Success)
+        {
+            throw new InvalidOperationException(
+                $"Required variable '{unresolved.Groups["name"].Value}' is unresolved.");
+        }
+
+        return resolved;
     }
 
     public static string? ResolveNullableText(string? value, IReadOnlyDictionary<string, string?>? variables)

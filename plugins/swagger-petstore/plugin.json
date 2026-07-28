@@ -3,19 +3,113 @@
   "name": "Swagger PetStore",
   "version": "1.0.0",
   "schemaVersion": "1.0.0",
-  "engineVersion": "0.15.0",
+  "engineVersion": "1.0.0",
   "author": "Backend Testing Studio",
-  "description": "Declarative CRUD plugin for the public Swagger PetStore pet endpoints.",
+  "description": "Canonical single-file CRUD plugin for Swagger PetStore.",
   "defaultEnvironment": "swagger-petstore-live",
+  "tags": ["sample", "crud", "pets"],
+  "variables": [
+    { "name": "ApiKey", "type": "string", "sensitive": true, "exportable": false },
+    { "name": "PetId", "type": "number", "defaultValue": "987654321", "required": true },
+    { "name": "PetName", "type": "string", "defaultValue": "BTS Pet" },
+    { "name": "UpdatedPetName", "type": "string", "defaultValue": "BTS Pet Updated" },
+    { "name": "PetStatus", "type": "string", "defaultValue": "available" },
+    { "name": "UpdatedPetStatus", "type": "string", "defaultValue": "pending" }
+  ],
+  "environments": [
+    {
+      "id": "swagger-petstore-live",
+      "name": "Swagger PetStore Live",
+      "baseUrl": "https://petstore.swagger.io/v2",
+      "level": "Development",
+      "allowedHosts": ["petstore.swagger.io"],
+      "headers": { "Accept": "application/json" },
+      "authentication": { "type": "ApiKey", "headerName": "api_key", "value": "{{ApiKey}}" },
+      "timeoutMilliseconds": 30000
+    }
+  ],
   "modules": [
-    "pet"
+    {
+      "id": "pet",
+      "name": "Pet",
+      "defaultHeaders": { "Content-Type": "application/json", "Accept": "application/json" },
+      "endpoints": [
+        {
+          "id": "create-pet",
+          "name": "Create pet",
+          "method": "POST",
+          "path": "/pet",
+          "payload": "pet-create",
+          "assertions": ["status-ok", "pet-id-matches", "pet-name-matches"],
+          "saveVariables": [{ "name": "PetId", "source": "JsonPath", "path": "$.id", "required": true }]
+        },
+        {
+          "id": "get-pet",
+          "name": "Get pet",
+          "method": "GET",
+          "path": "/pet/{{PetId}}",
+          "assertions": ["status-ok", "pet-id-matches"]
+        },
+        {
+          "id": "update-pet",
+          "name": "Update pet",
+          "method": "PUT",
+          "path": "/pet",
+          "payload": "pet-update",
+          "assertions": ["status-ok", "pet-id-matches", "pet-updated-name-matches"]
+        },
+        {
+          "id": "delete-pet",
+          "name": "Delete pet",
+          "method": "DELETE",
+          "path": "/pet/{{PetId}}",
+          "headers": { "api_key": "{{ApiKey}}" },
+          "assertions": ["status-ok"]
+        }
+      ]
+    }
   ],
-  "tags": [
-    "sample",
-    "swagger",
-    "crud",
-    "pets"
+  "payloads": [
+    {
+      "id": "pet-create",
+      "contentType": "application/json",
+      "content": {
+        "id": "{{PetId}}",
+        "name": "{{PetName}}",
+        "status": "{{PetStatus}}",
+        "photoUrls": ["https://example.test/pet.png"]
+      }
+    },
+    {
+      "id": "pet-update",
+      "contentType": "application/json",
+      "content": {
+        "id": "{{PetId}}",
+        "name": "{{UpdatedPetName}}",
+        "status": "{{UpdatedPetStatus}}",
+        "photoUrls": ["https://example.test/pet.png"]
+      }
+    }
   ],
-  "repositoryUrl": "https://petstore.swagger.io",
-  "supportUrl": "https://petstore.swagger.io/v2/swagger.json"
+  "assertions": [
+    { "id": "status-ok", "type": "StatusCode", "expected": 200 },
+    { "id": "pet-id-matches", "type": "JsonPath", "path": "$.id", "expected": "{{PetId}}" },
+    { "id": "pet-name-matches", "type": "JsonPath", "path": "$.name", "expected": "{{PetName}}" },
+    { "id": "pet-updated-name-matches", "type": "JsonPath", "path": "$.name", "expected": "{{UpdatedPetName}}" }
+  ],
+  "scenarios": [
+    {
+      "id": "pet-crud-lifecycle",
+      "name": "Pet CRUD lifecycle",
+      "description": "Create, read, update and delete a test pet.",
+      "tags": ["pet", "crud", "smoke"],
+      "onFailure": "Stop",
+      "steps": [
+        { "id": "create", "execute": "create-pet" },
+        { "id": "read", "execute": "get-pet", "dependsOn": ["create"] },
+        { "id": "update", "execute": "update-pet", "dependsOn": ["read"] },
+        { "id": "delete", "execute": "delete-pet", "dependsOn": ["update"] }
+      ]
+    }
+  ]
 }
